@@ -217,3 +217,141 @@ footer {
     left: -8px;
   }
 }
+
+/* Blog styles */
+.blog-page {
+  background-color: #f7f9fc;
+}
+
+.blog-hero {
+  position: relative;
+  padding: 160px 0 120px;
+  background: linear-gradient(120deg, rgba(11, 19, 43, 0.85), rgba(61, 106, 214, 0.75)),
+              url('../img/tao-hu.jpg') center/cover no-repeat;
+  color: #ffffff;
+}
+
+.blog-hero .overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 19, 43, 0.45);
+}
+
+.blog-hero .container {
+  position: relative;
+  z-index: 1;
+}
+
+.blog-hero h1 {
+  color: #ffffff;
+}
+
+.blog-hero .lead {
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 720px;
+  margin: 1rem auto 0;
+}
+
+.blog-meta {
+  margin-top: 1.5rem;
+  display: inline-flex;
+  gap: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.blog-meta i {
+  margin-right: 0.35rem;
+}
+
+.blog-content {
+  background: transparent;
+}
+
+.blog-post {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 3rem;
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.08);
+}
+
+.blog-post h2 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.blog-post h3,
+.blog-post h4 {
+  color: var(--primary);
+}
+
+.blog-post p {
+  line-height: 1.75;
+  font-size: 1.05rem;
+}
+
+.blog-post .math-display {
+  text-align: center;
+  margin: 1.25rem 0;
+  font-size: 1.05rem;
+}
+
+.blog-post ul {
+  padding-left: 1.2rem;
+}
+
+.algorithm,
+.theorem-block,
+.example-block {
+  background: rgba(61, 106, 214, 0.05);
+  border-left: 4px solid var(--primary);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+}
+
+.algorithm-header {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+  color: var(--primary);
+}
+
+.algorithm-steps {
+  margin-bottom: 0;
+  padding-left: 1.1rem;
+}
+
+.theorem-block h4,
+.example-block h4 {
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.references {
+  padding-left: 1.2rem;
+  list-style: disc;
+}
+
+.references li {
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+
+.blog-highlight {
+  background: linear-gradient(135deg, rgba(61, 106, 214, 0.15), rgba(242, 181, 68, 0.25));
+}
+
+@media (max-width: 767px) {
+  .blog-post {
+    padding: 2rem;
+  }
+
+  .blog-meta {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+}
