@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UCB IEOR 262B Course Project | Tao Hu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="blog-page">
+  <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+    <div class="container">
+      <a class="navbar-brand" href="../index.html">Tao Hu</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="../index.html#about">About</a></li>
+          <li class="nav-item"><a class="nav-link" href="../index.html#education">Education</a></li>
+          <li class="nav-item"><a class="nav-link" href="../index.html#research">Research</a></li>
+          <li class="nav-item"><a class="nav-link" href="../index.html#experience">Experience</a></li>
+          <li class="nav-item"><a class="nav-link" href="../index.html#honors">Honors</a></li>
+          <li class="nav-item"><a class="nav-link" href="../index.html#skills">Skills</a></li>
+          <li class="nav-item"><a class="nav-link" href="../index.html#blog">Blog</a></li>
+          <li class="nav-item"><a class="nav-link" href="../index.html#contact">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <header class="blog-hero">
+    <div class="overlay"></div>
+    <div class="container text-center text-white">
+      <h1 class="display-5">Properties of Frank-Wolfe's Method and Linear Minimization Oracle</h1>
+      <p class="lead">UCB IEOR 262B course project</p>
+      <div class="blog-meta">
+        <span><i class="bi bi-calendar-event"></i> March 2025</span>
+        <span><i class="bi bi-tag"></i> Optimization</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="blog-content py-5">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-xl-9">
+          <article class="blog-post">
+            <h2 class="mb-4">Course Project Draft</h2>
+            <div class="bg-light border rounded p-3">
+              <pre class="mb-0" style="white-space: pre-wrap; font-family: 'Courier New', monospace;">
+%%%%%%%%%%%%%%%%%%%%%%%% file template.tex %%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% This is a general template file for the LaTeX package SVJour3
+% for Springer journals.          Springer Heidelberg 2010/09/16
+%
+% Copy it to a new file with a new name and use it as the basis
+% for your article. Delete % signs as needed.
+%
+% This template includes a few options for different layouts and
+% content for various journals. Please consult a previous issue of
+% your journal as needed.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% First comes an example EPS file -- just ignore it and
+% proceed on the \documentclass line
+% your LaTeX will extract the file if required
+\begin{filecontents*}{example.eps}
+%!PS-Adobe-3.0 EPSF-3.0
+%%BoundingBox: 19 19 221 221
+%%CreationDate: Mon Sep 29 1997
+%%Creator: programmed by hand (JK)
+%%EndComments
+gsave
+newpath
+  20 20 moveto
+  20 220 lineto
+  220 220 lineto
+  220 20 lineto
+closepath
+2 setlinewidth
+gsave
+  .4 setgray fill
+grestore
+stroke
+grestore
+\end{filecontents*}
+%
+\RequirePackage{fix-cm}
+%
+%\documentclass{svjour3}                     % onecolumn (standard format)
+%\documentclass[smallcondensed]{svjour3}     % onecolumn (ditto)
+\documentclass[smallextended]{svjour3}       % onecolumn (second format)
+%\documentclass[twocolumn]{svjour3}          % twocolumn
+%
+\smartqed  % flush right qed marks, e.g. at end of proof
+%
+\usepackage{enumerate}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{cor}[thm]{Corollary}
+%\newtheorem{lem}{Lemma}
+\newtheorem{prob}{Problem}
+\newtheorem{ques}[thm]{Question}
+\newtheorem{prop}[thm]{Proposition}
+\newtheorem{defin}[thm]{Definition}
+\newtheorem{bound}[thm]{Bound}
+\newtheorem{rem}[thm]{Remark}
+\newtheorem{eg}[thm]{Example}
+\newtheorem{conj}[thm]{Conjecture}
+\def\HH{\mathcal H}
+\newcommand{\bl}{\color{blue}}
+\newcommand{\red}{\color{red}}
+\newcommand{\tr}{\text{tr}}
+\newcommand{\diag}{\text{diag}}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{physics}
+\usepackage[colorlinks,linkcolor=blue]{hyperref}
+\newcommand{\ones}[1]{\mathbf{1}_{#1}}
+\newcommand{\ul}{\boldsymbol}
+\newcommand{\ml}{\boldsymbol}
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\mcH}{\mathcal{H}}
+\newcommand{\Argmin}{\ensuremath{{\text{\rm Argmin}}}}
+\DeclareMathOperator{\proj}{Proj}
+\DeclareMathOperator{\lmo}{LMO}
+\newcommand{\scal}[2]{{\langle{{#1}\mid{#2}}\rangle}}
+\newcommand{\epsproj}{\varepsilon\text{-}\proj} % custom operator
+\newcommand{\Kproj}{K\text{-}\proj} % custom operator
+\newcommand{\epsmin}{\varepsilon\text{-}\lmo} % custom operator
+%\newtheorem{lemma}{Lemma}
+%\newtheorem{remark}{Remark}
+%\newtheorem{cor}{Corollary}
+
+\usepackage{amsmath}
+\usepackage{bm}  % 使符号加粗
+
+\newcommand{\x}{\boldsymbol{x}}
+\newcommand{\s}{\boldsymbol{s}}
+
+\makeatletter
+\newenvironment{breakablealgorithm}
+  {% \begin{breakablealgorithm}
+   \begin{center}
+     \refstepcounter{algorithm}% New algorithm
+     \hrule height.8pt depth0pt \kern2pt% \@fs@pre for \@fs@ruled
+     \renewcommand{\caption}[2][\relax]{% Make a new \caption
+       {\raggedright\textbf{\ALG@name~\thealgorithm} ##2\par}%
+       \ifx\relax##1\relax % #1 is \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##2}%
+       \else % #1 is not \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##1}%
+       \fi
+       \kern2pt\hrule\kern2pt
+     }
+  }{% \end{breakablealgorithm}
+     \kern2pt\hrule\relax% \@fs@post for \@fs@ruled
+   \end{center}
+  }
+\makeatother
+
+% \newcommand{\x}{\boldsymbol{x}}
+
+
+%
+% \usepackage{mathptmx}      % use Times fonts if available on your TeX system
+%
+% insert here the call for the packages your document requires
+%\usepackage{latexsym}
+% etc.
+%
+% please place your own definitions here and don't use \def but
+% \newcommand{}{}
+%
+% Insert the name of "your journal" with
+% \journalname{myjournal}
+%
+\begin{document}
+
+\title{Properties of Frank-Wolfe's Method and Linear Minimization Oracle}
+
+\author{Tao Hu}
+
+\institute{Tao Hu \at
+              Xi'an Jiaotong University \\
+              Tel.: +1 (510)-384-9593\\
+              \email{tao\_hu@berkeley.edu}        
+}
+\maketitle
+
+\begin{abstract}
+\keywords{Frank-Wolfe \and Robust Algorithm \and Projection \and Linear Minimization Oracle}
+
+My final project mainly discusses the performance of Frank-Wolfe's method when a disturbed gradient is used. Also, I proved that an accurate linear minimization oracle is no slower than an inexact projection.
+
+% \PACS{PACS code1 \and PACS code2 \and more}
+%\subclass{MSC code1 \and MSC code2 \and more}
+\end{abstract}
+
+\section{Introduction}
+We consider the maximization problems:
+\begin{equation}
+\label{poi3}\begin{array}{rl}\max\limits_{\lambda} & h(\lambda) \\
+\mathrm{s.t.} & \lambda \in Q \ , \end{array}
+\end{equation}
+where $Q \subset E$ is convex and compact, and $h(\cdot) : Q \to \mathbb{R}$ is differentiable on $Q$.
+
+\begin{algorithm}
+\caption{Frank-Wolfe Method for maximizing $h(\lambda)$}\label{fw-basic}
+\begin{algorithmic}
+\State Pick initial point $\lambda_0 \in Q$, initial upper bound $U_{init}$ (usually determined by prior knowledge, if no prior knowledge is assumed, then $U_{init} = +\infty$), $k \gets 0$ .
+
+At iteration $k$:
+\State 1. Evaluate $\nabla h (\lambda_k)$ .
+\State 2. Evaluate $\tilde \lambda_k \gets \arg\max\limits_{\lambda \in Q}\{h(\lambda_k) + \nabla h (\lambda_k)^T(\lambda - \lambda_k)\}$ .\\
+\ \ \ \ \ \ \ \ \ $U^w_k \leftarrow h(\lambda_k) + \nabla h (\lambda_k)^T(\tilde \lambda_k - \lambda_k)$ .\\
+\ \ \ \ \ \ \ \ \ $G_k \leftarrow \nabla h (\lambda_k)^T(\tilde \lambda_k - \lambda_k)$ .\\
+\ \ \ \ \ \ \ \ \ $U_k \leftarrow \min\{U_{k - 1}, U_k^{w}\}$, if $k \geq 1$.\\
+\ \ \ \ \ \ \ \ \ $U_0 \leftarrow \min\{U_{init}, U_0^{w}\}$, if $k = 0$.
+\State 3. Set $\lambda_{k+1} \gets \lambda_k + \bar{\alpha}_k(\tilde \lambda_k - \lambda_k)$, where $\bar{\alpha}_0 = 1$ and $\bar{\alpha}_k \in [0,1), \forall \; k \geq 1$ .
+\end{algorithmic}
+\end{algorithm}
+
+In order to prove the convergence of the Frank-Wolfe algorithm,  the following two auxiliary sequences are frequently used, where $\alpha_k$ and $\beta_k$ are determined by the first $k$ step-sizes, $\bar{\alpha}_1, \ldots, \bar{\alpha}_k$ in Algorithm \ref{fw-basic}:
+\begin{equation}\label{dos}
+\beta_k = \frac{1}{\prod\limits_{j=1}^{k-1} (1-\bar \alpha_j)} \ , \ \ \ \ \ \ \alpha_k = \frac{\beta_k \bar \alpha_k}{1- \bar \alpha_k} \ , \ \ \ \ \ k \ge 1 \ .
+\end{equation}
+(We follow the conventions: $\prod_{j = 1}^0\cdot = 1$ and $\sum_{i = 1}^0\cdot = 0$ .)\medskip
+
+\section{Frank-Wolfe Method for smooth convex functions}
+
+Assume that $h$ is concave and its gradient is $L_{h,Q}-$ Lipschitz, that is,
+$$\| \nabla h(\lambda) -\nabla h(\bar \lambda)\|_* \le L_{h,Q} \|\lambda - \bar \lambda\|, \; \forall \; \lambda, \bar \lambda \in Q \ . $$
+
+We denote $C_{h,Q} = L_{h,Q} (Diam_Q)^2$. 
+
+In this scenario, several results have been discussed by Freund and Grigas  \cite{Freund_Grigas_2016}. 
+
+\begin{theorem}\label{fw-complexity}
+If the step-size sequence $\{\bar\alpha_k\}$ is used in the iterate sequences of the Frank-Wolfe method (Method \ref{fw-basic}), then the following inequality holds for all $k \geq 0$, 
+\begin{equation}\label{fw-ineq1}
+U_k - h(\lambda_{k+1}) \leq \frac{U_0 - h(\lambda_1)}{\beta_{k+1}} + \frac{\frac{1}{2}C_{h,Q}\sum_{i = 1}^k\frac{\alpha_i^2}{\beta_{i+1}}}{\beta_{k+1}} \ .
+\end{equation}
+\end{theorem}\medskip
+
+\begin{proof}
+    \\
+    h(\lambda_{k + 1}) =& h(\lambda_k) + \nabla h(\lambda_k)^T(\lambda_{k + 1} - \lambda_k) - \frac{1}{2} L_{h,Q} \|\lambda_{k + 1} - \lambda_k\|^2\\
+    =& h(\lambda_k) + \bar{\alpha}_k \nabla h(\lambda_k)^T(\widetilde{\lambda}_k - \lambda_k) - \frac{1}{2} \bar{\alpha}_k^2 L_{h,Q} \|\widetilde{\lambda}_k - \lambda_k\|^2\\
+    \geq& h(\lambda_k) + \bar{\alpha}_k \nabla h(\lambda_k)^T(\widetilde{\lambda}_k - \lambda_k) - \frac{1}{2} \bar{\alpha}_k^2 C_{h,Q}.
+    \\
+    We have that \\
+    U_k^w = h(\lambda_k) + \nabla h(\lambda_k)^T (\widetilde{\lambda}_k - \lambda_k).
+
+    Therefore, \\
+    h(\lambda_{k + 1}) \geq& (1 - \bar{\alpha}_k) h(\lambda_k) + \bar{\alpha}_k (h(\lambda_k) + \nabla h(\lambda_k)^T(\widetilde{\lambda}_k - \lambda_k)) - \frac{1}{2} \bar{\alpha}_k^2 C_{h , Q}\\
+        =& (1 - \bar{\alpha}_k) h(\lambda_k) + \bar{\alpha}_k U_k^w - \frac{1}{2} \bar{\alpha}_k^2 C_{h , Q}.
+
+    Hence, \\
+    \beta_{k + 1} h(\lambda_{k + 1}) \geq& \beta_{k + 1} (1 - \bar{\alpha}_k) h(\lambda_k) + \bar{\alpha}_k \beta_{k + 1} U_k^w - \frac{1}{2} \bar{\alpha}_k^2 \beta_{k + 1} C_{h , Q}\\
+        =& \beta_k h(\lambda_k) + (\beta_{k + 1} - \beta_k) U_k^w - \frac{1}{2} \frac{\alpha_k^2}{\beta_{k + 1}} C_{h , Q}\\
+        \geq& \beta_k h(\lambda_k) + (\beta_{k + 1} - \beta_k) U_{k} - \frac{1}{2} \frac{\alpha_k^2}{\beta_{k + 1}} C_{h , Q}.\\
+
+    Therefore, \\
+        \beta_{k + 1} (U_k - h(\lambda_{k + 1})) \leq& \beta_k(U_k - h(\lambda_k)) + \frac{1}{2} \frac{\alpha_k^2}{\beta_{k + 1}} C_{h , Q}\\
+        \leq& \beta_k(U_{k -1} - h(\lambda_k)) + \frac{1}{2} \frac{\alpha_k^2}{\beta_{k + 1}} C_{h , Q}.
+
+    Taking summation, we get that
+    \\
+    \beta_{k + 1} (U_k - h(\lambda_{k + 1})) \leq \beta_1 (U_0 - h(\lambda_1)) + \frac{1}{2} \sum_{j = 1}^k \frac{\alpha_j^2}{\beta_{j + 1}} C_{h , Q}.
+
+    We conclude that, since $\beta_{k + 1} > 0$, \\
+
+    U_k - h(\lambda_{k + 1}) \leq \frac{U_0 - h(\lambda_1)}{\beta_{k + 1}} + \frac{C_{h , Q} \sum_{j = 1}^k \frac{\alpha_j^2}{\beta_{j + 1}}}{2 \beta_{k + 1}}.
+    \qed
+
+\end{proof}
+
+\subsection{Inexact Gradient}
+
+Assuming that we are using a $\delta$-oracle, that is, every time we are doing a gradient evaluation, we don't get an exact gradient; instead, we get a "gradient" $g_{\delta}(\lambda)$ with error $\delta/(Diam Q)$, that is, 
+\[\|g_\delta(\lambda) - \nabla h(\lambda)\| \leq \frac{\delta}{Diam Q}, \forall \; \lambda \in Q.\]
+
+We conclude that, $\forall \; \lambda_1 , \lambda_2 \in Q$,  
+\\
+    h(\lambda_2) \leq& h(\lambda_1) + \nabla h(\lambda_1)^T(\lambda_2 - \lambda_1)\\
+    \leq& h(\lambda_1) + g_\delta(\lambda_1)^T (\lambda_2 - \lambda_1) + \|g_\delta(\lambda_1) - \nabla h(\lambda_1)\|\|\lambda_2 - \lambda_1\|\\
+    \leq& h(\lambda_1) + g_\delta(\lambda_1)^T (\lambda_2 - \lambda_1) + \delta;  
+
+\\
+    h(\lambda_2) \geq& h(\lambda_1) + \nabla h(\lambda_1)^T(\lambda_2 - \lambda_1) - \frac{1}{2} L_{h , Q} \|\lambda_2 - \lambda_1\|^2\\
+    \geq& h(\lambda_1) + g_\delta(\lambda_1)^T (\lambda_2 - \lambda_1) - \|g_\delta(\lambda_1) - \nabla h(\lambda_1)\|\|\lambda_2 - \lambda_1\| - \frac{1}{2} L_{h , Q} \|\lambda_2 - \lambda_1\|^2\\
+    \geq& h(\lambda_1) + g_\delta(\lambda_1)^T (\lambda_2 - \lambda_1) - \delta - \frac{1}{2} L_{h , Q} \|\lambda_2 - \lambda_1\|^2;  
+
+\begin{algorithm}
+\caption{Frank-Wolfe Method Using $\delta$-Oracle}\label{fw-dgn}
+\begin{algorithmic}
+\State Pick initial point $\lambda_0 \in Q$, initial upper bound $U_{init}$ (usually determined by prior knowledge, if know prior knowledge is assumed, then $U_{init} = +\infty$), $k \gets 0$ .
+
+At iteration $k$:
+\State 1. Evaluate $g_\delta(\lambda_k)$ .
+\State 2. Evaluate $\tilde \lambda_k \gets \arg\max\limits_{\lambda \in Q}\{h(\lambda_k) + g_\delta(\lambda_k)^T(\lambda - \lambda_k)\}$ .\\
+\ \ \ \ \ \ \ \ \ $U^w_k \leftarrow h(\lambda_k) + \delta + g_\delta(\lambda_k)^T(\tilde \lambda_k - \lambda_k)$ .\\
+\ \ \ \ \ \ \ \ \ $U_k \leftarrow \min\{U_{k - 1}, U_k^{w}\}$, if $k \geq 1$.\\
+\ \ \ \ \ \ \ \ \ $U_0 \leftarrow \min\{U_{init}, U_0^{w}\}$, if $k = 0$.
+\State 3. Set $\lambda_{k+1} \gets \lambda_k + \bar{\alpha}_k(\tilde \lambda_k - \lambda_k)$, where $\bar{\alpha}_0 = 1$ and $\bar{\alpha}_k \in [0,1), \forall \; k \geq 1$ .
+\end{algorithmic}
+\end{algorithm}\medskip
+
+Under inexact gradient evaluation, the bound is given as follows \cite{Freund_Grigas_2016}, 
+
+\begin{theorem}\label{dgn-complexity}
+If the step-size sequence $\{\bar\alpha_k\}$ is used in the iterate sequences of the Frank-Wolfe method with the $\delta$-oracle (Algorithm \ref{fw-dgn}), 
+\begin{equation}\label{fwdgn-ineq2}
+U_k - h(\lambda_{k+1}) \leq \frac{U_0 - h(\lambda_1)}{\beta_{k+1}} + \frac{\frac{1}{2}C_{h , Q}\sum_{i = 1}^k\frac{\alpha_i^2}{\beta_{i+1}}}{\beta_{k+1}} + \frac{2\delta\sum_{i = 1}^k\beta_{i+1}}{\beta_{k+1}} ,\,  \forall \; k \geq 0.
+\end{equation}
+\end{theorem}\medskip
+
+\begin{proof}
+    \\
+        h(\lambda_{k + 1}) \geq& h(\lambda_k) + g_{\delta}(\lambda_k)^T (\lambda_{k + 1} - \lambda_k) - \delta - \frac{1}{2} L_{h , Q} \|\lambda_{k + 1} - \lambda_k\|^2\\
+        =& h(\lambda_k) + \bar{\alpha}_k g_{\delta}(\lambda_k)^T (\widetilde{\lambda}_k - \lambda_k) - \delta - \frac{1}{2} \bar{\alpha}_k^2 L_{h , Q} \|\widetilde{\lambda}_k - \lambda_k\|^2\\
+        \geq& (1 - \bar{\alpha}_k) h(\lambda_k) + \bar{\alpha}_k (h(\lambda_k) + g_{\delta}(\lambda_k)^T (\widetilde{\lambda}_k - \lambda_k) + \delta) - (1 + \bar{\alpha}_k) \delta - \frac{1}{2} C_{h , Q}  \bar{\alpha}_k^2\\
+        \geq& (1 - \bar{\alpha}_k) h(\lambda_k) + \bar{\alpha}_k U_k^w - 2\delta - \frac{1}{2} C_{h , Q} \bar{\alpha}_k^2\\
+        \geq& (1 - \bar{\alpha}_k) h(\lambda_k) + \bar{\alpha}_k U_k - 2\delta - \frac{1}{2} C_{h , Q} \bar{\alpha}_k^2
+
+    Hence, \\
+        U_k - h(\lambda_{k + 1}) \leq& U_k - (1 - \bar{\alpha}_k) h(\lambda_k) - \bar{\alpha}_k U_k + 2\delta + \frac{1}{2} C_{h , Q} \bar{\alpha}_k^2\\
+        =& (1 - \bar{\alpha}_k) (U_{k - 1} - h(\lambda_k)) + 2\delta + \frac{1}{2} C_{h , Q} \bar{\alpha}_k^2.\\
+
+    Therefore, \\
+    \beta_k(U_k - h(\lambda_{k + 1})) \leq \beta_{k - 1} (U_{k - 1} - h(\lambda_k)) + 2 \delta \beta_k + \frac{1}{2} C_{h , Q} \bar{\alpha}_k^2 \beta_k.
+
+    By taking summation, we get that
+    \\
+    \beta_k (U_k - h(\lambda_{k + 1})) \leq (U_0 - h(\lambda_1)) + 2 \delta \sum_{j = 1}^k \beta_j + \frac{1}{2} C_{h , Q} \sum_{j = 1}^k \bar{\alpha}_j^2 \beta_j.
+
+    To conclude,
+
+    \\
+    U_k - h(\lambda_{k+1}) \leq \frac{U_0 - h(\lambda_1)}{\beta_k} + 2\delta \frac{\sum_{j = 1}^k \beta_j}{\beta_k} + \frac{1}{2} C_{h , Q} \sum_{j = 1}^k \bar{\alpha}_j^2 \beta_j.
+
+    Dividing both side by $\beta_k$ yields the result.
+    \qed
+\end{proof}
+
+Consider the right hand side of Equation \eqref{fwdgn-ineq2}, we have that
+\\
+    &\frac{U_0 - h(\lambda_1)}{\beta_{k+1}} + \frac{\frac{1}{2}C_{h , Q}\sum_{i = 1}^k\frac{\alpha_i^2}{\beta_{i+1}}}{\beta_{k+1}} + \frac{\sum_{i = 1}^k\beta_{i+1}\delta}{\beta_{k+1}} \\
+    =& \frac{U_0 - h(\lambda_1)}{\beta_{k+1}} + \frac{\sum_{i = 1}^k (\frac{1}{2} C_{h , Q} \frac{\alpha_i^2}{\beta_{i + 1}} + \beta_{i+1}\delta)}{\beta_{k + 1}}\\
+    \geq& \frac{U_0 - h(\lambda_1)}{\beta_{k+1}} + \frac{\sum_{i = 1}^k \alpha_i \sqrt{2C_{h,Q} \delta} }{\beta_{k + 1}}\\
+    =& \frac{U_0 - h(\lambda_1)}{\beta_{k+1}} + \sqrt{2C_{h,Q} \delta}\frac{\beta_{k + 1} - 1}{\beta_{k + 1}}.
+
+For $k$ sufficiently large, we have that 
+\\
+0 < \frac{\beta_2 - 1}{\beta_2} \leq \frac{\beta_{k + 1} - 1}{\beta_{k + 1}} \leq 1.
+
+Therefore, in order to achieve a first-order accurate solution, we need a second-order accurate gradient.
+
+\section{Frank-Wolfe Method with constant step sizes}
+
+We now take a special example of the results above.
+
+\subsection{Concave Functions with Lipschitz Gradient}
+
+Given $\bar \alpha \in (0,1)$, consider using the following constant step-size rule:
+\begin{equation}\label{constantstep}
+\bar \alpha_i = \bar{\alpha} \ \ \ \ \  \ \mbox{for~} i \ge 1 \ .
+\end{equation}.
+
+\begin{proposition}\label{constant-bound}
+Under the step-size sequence (\ref{constantstep}), the following inequality holds for all $k \ge 1$:
+\begin{equation}\label{constant-bound1}
+ U_{k} - h(\lambda_{k+1})  \leq \left(U_k - h(\lambda_1)\right)(1-\bar{\alpha})^{k}+ \tfrac{1}{2}C_{h,Q}\left[ \bar{\alpha}-\bar \alpha(1-\bar{\alpha})^{k} \right] \ .
+\end{equation}
+As a consequence:
+\begin{equation}\label{constant-bound2}
+ U_{k} - h(\lambda_{k+1})  \leq \tfrac{1}{2}C_{h,Q}\left[(1-\bar{\alpha})^{k+1} + \bar{\alpha}\right] \ .
+\end{equation}
+\end{proposition}
+
+It can be easily observed that the right hand side is a convex function. By taking derivatives and finding the stationary point, we can get that the optimal $\bar{\alpha}$ to choose is
+
+\begin{equation}\label{opt-alpha}
+    \bar{\alpha} = 1 - \frac{1}{\sqrt[k]{k + 1}},
+\end{equation}
+
+if we fix the iteration number before the algorithm starts.
+
+The following proposition and the idea of prestart is provided by Freund and Grigas \cite{Freund_Grigas_2016}.
+
+\begin{proposition} \label{prestart-property}
+    $U_0 - h(\lambda_1) \le \frac{1}{2}C_{h,Q}$.
+\end{proposition}
+
+\begin{proof}We have $\lambda_1 = \tilde\lambda_0$ and $U_0 \le U^w_0$, whereby from the definition of $C_{h,Q}$ using $\alpha = 1$ we have:
+$$h(\lambda_1) = h(\tilde\lambda_0) \ge h(\lambda_0) + \nabla h(\lambda_0)^T(\tilde\lambda_0 - \lambda_0) - \tfrac{1}{2}C_{h,Q} = U^w_0 - \tfrac{1}{2}C_{h,Q} \ge U_0- \tfrac{1}{2}C_{h,Q} \ , $$ and the result follows by rearranging terms.
+\end{proof}
+
+When we are using a constant step size $\bar{\alpha}_k = \bar{\alpha}$, and we take $\delta_i = \delta$, then we have that
+\[\beta_k = (1 - \bar{\alpha})^{- k + 1}, \alpha_k = \bar{\alpha} (1 - \bar{\alpha})^{-k}.\]
+
+By substitute them in, we get that
+
+\\
+&U_k - h(\lambda_{k+1}) \\
+\leq& (1 - \bar{\alpha})^{k - 1}(U_k - h(\lambda_1)) + \frac{1}{2}\mathrm{Diam}_Q^2(1 - \bar{\alpha})^{k}\sum_{i = 1}^k L_i \bar{\alpha}^2(1 - \bar{\alpha})^{-i} + (1 - \bar{\alpha})^k\sum_{i = 1}^k(1 - \bar{\alpha})^{-i}\delta \\
+\leq& (1 - \bar{\alpha})^{k - 1}(U_k - h(\lambda_1)) + \frac{1}{2}\mathrm{Diam}_Q^2(1 - \bar{\alpha})^{k}\sum_{i = 1}^k L\bar{\alpha}^2(1 - \bar{\alpha})^{-i} + (1 - \bar{\alpha})^k\sum_{i = 1}^k(1 - \bar{\alpha})^{-i}\delta \\
+=& (1 - \bar{\alpha})^{k - 1}(U_k - h(\lambda_1)) + \frac{1}{2}\mathrm{Diam}_Q^2(1 - \bar{\alpha})^{k}\sum_{i = 1}^kL\bar{\alpha}^2(1 - \bar{\alpha})^{-i} + (1 - \bar{\alpha})^k\sum_{i = 1}^k(1 - \bar{\alpha})^{-i}\delta \\
+=& (1 - \bar{\alpha})^{k - 1}(U_k - h(\lambda_1)) + \left(\frac{1}{2}\mathrm{Diam}_Q^2L\bar{\alpha}^2 + \delta\right) (1 - \bar{\alpha})^k \sum_{i = 1}^k (1 - \bar{\alpha})^{-i} \\
+=& (1 - \bar{\alpha})^{k - 1}(U_k - h(\lambda_1)) + \left(\frac{1}{2}\mathrm{Diam}_Q^2L\bar{\alpha}^2 + \delta\right) \frac{1 - (1 - \bar{\alpha})^k}{\bar{\alpha}}\\
+=& (1 - \bar{\alpha})^{k - 1}(U_k - h(\lambda_1)) + \left(\frac{1}{2}\mathrm{Diam}_Q^2L\bar{\alpha} + \frac{\delta}{\bar{\alpha}}\right) \left(1 - (1 - \bar{\alpha})^k\right).
+
+By Proposition \ref{prestart-property}, we can proceed that,
+\\
+&U_k - h(\lambda_{k + 1})\\
+\leq& \frac{1}{2} (1 - \bar{\alpha})^{k - 1} C_{h,Q} + \left(\frac{1}{2}C_{h,Q}\bar{\alpha} + \frac{\delta}{\bar{\alpha}}\right) \left(1 - (1 - \bar{\alpha})^k\right)\\
+\leq& \frac{1}{2} C_{h,Q} (1 - \bar{\alpha})^{k - 1} + \left(\frac{1}{2}C_{h,Q}\bar{\alpha} + \frac{\delta}{\bar{\alpha}}\right)\\
+=& \frac{1}{2} C_{h,Q} \left((1 - \bar{\alpha})^{k - 1} + \bar{\alpha}\right) + \frac{\delta}{\bar{\alpha}}.
+
+If we take $\bar{\alpha} = 1 - (k - 1)^{- 1/(k - 2)}$, then
+
+\[\bar{\alpha} = 1 - (k - 1)^{- 1/(k - 2)} = 1 - e^{-\frac{\log(k - 1)}{k - 2}} \in \left[\frac{1}{e} \frac{\log(k - 1)}{k - 2} , \frac{\log(k - 1)}{k - 2}\right]\]
+
+\\
+&U_k - h(\lambda_{k + 1})\\
+\leq& \frac{1}{2} C_{h,Q} \left((1 - \bar{\alpha})^{k - 1} + \bar{\alpha}\right) + \frac{\delta}{\bar{\alpha}}\\
+\leq& \frac{1}{2} C_{h,Q} \left((1 - \bar{\alpha})^{k - 2} + \bar{\alpha}\right) + \frac{\delta}{\bar{\alpha}}\\ 
+=& \frac{1}{2} C_{h,Q} \left(\frac{1}{k -1} + 1 - (k-1)^{-\frac{1}{k - 2}}\right) + \frac{\delta}{\bar{\alpha}}\\ 
+=& \frac{1}{2} C_{h,Q} \left(\frac{1}{k -1} + 1 - e^{-\frac{\log(k - 1)}{k - 2}}\right) + \frac{\delta}{\bar{\alpha}}\\ 
+\leq& \frac{1}{2} C_{h,Q} \left(\frac{1}{k - 1} + \frac{\log(k - 1)}{k - 2} \right) + \frac{\delta}{\bar{\alpha}}
+
+Therefore, in order to achieve a convergence rate of $\widetilde{O}(\frac{1}{k})$, it suffices to let 
+\[\delta \sim O(\frac{\bar{\alpha}}{k}) = O(\frac{\log(k)}{k^2}).\]
+
+\section{A Comparison between the Projection Problem and the Linear Minimization Problem}
+
+\subsection{Coarse Projection is More Expensive than High-accuracy Linear Minimization}
+
+\begin{definition}
+    Suppose that $\mcH$ is a real Hilbert space equipped with inner product $\scal{\cdot}{\cdot}$ which induces the norm $\|\cdot\|$. Assume that $C \subset \mcH$ is a nonempty compact convex set. From the compactness of $C$, we are allowed to define the projection operator and the set of linear minimization oracle points separately as follows:
+    \[\proj_C\colon\HH\to\HH\colon x\mapsto\Argmin_{c\in C}\|c-x\|,\]
+    \[\lmo_C\colon\HH\to 2^\HH\colon x\mapsto\Argmin_{c\in C}\scal{c}{x}.\]
+
+    In the studies of robust algorithms, the errors in both the projection and the minimization should be considered. For $\varepsilon \geq 0$, we define the set of $\epsilon$-approximate projection oracle points and $\varepsilon$-approximate linear minimization oracle as follows:
+    \[\]
+    \[\epsproj_C: \HH \rightarrow 2^\HH :  x \mapsto \{v \in \mcH | 0\leq \frac{1}{2}\|v - x\|^2-\min_{c\in C} \frac{1}{2} \|c - x\|^2\leq \varepsilon\},\]
+    \[\epsmin_C: \HH \rightarrow 2^\HH :  x \mapsto \{v \in \mcH | 0\leq \scal{v}{x}-\min_{c\in C}\scal{c}{x}\leq \varepsilon\}.\]
+\end{definition}
+
+The definition above actually provides four common minimization problems. An interesting question is which one of them is the hardest and which one of them is the easiest. Zev Woodstock \cite{Woodstock_2025} proved that an exact projection evaluation would be no easier than finding a point in $\epsmin_C$, no matter how small $\varepsilon$ is. The main contribution of this chapter is to give a small modification of Woodstock's proof and prove that finding a point in $\Kproj_C$ would be no easier than finding a point in $\epsmin_C$.
+
+\begin{proposition}\label{p:projlmo}
+    Suppose that $C \subset \HH$ is a nonempty compact convex set and $x \in \HH$, and that $p \in \epsproj(x)$. Then
+    \[\scal{c - p}{x - p} \leq \varepsilon  + \frac{1}{2} \|c-p\|^2, \forall \; c \in C.\]
+\end{proposition}
+
+\begin{proof}
+    Since $p \in \epsproj(x)$,
+    \[\frac{1}{2} \|p - x\|^2 \leq \frac{1}{2}\|c - x\|^2 + \varepsilon, \forall \; c\in C.\]
+
+    This could be written in the inner product form,
+    \[\frac{1}{2}\scal{c - p}{2x - p - c} \leq \varepsilon, \forall \; c \in C.\]
+
+    We thus get that
+    \[\scal{c - p}{x - p} \leq \varepsilon + \frac{1}{2} \|c-p\|^2, \forall \; c \in C.\]
+    \qed
+\end{proof}
+
+\begin{theorem}
+    Let $x \in \HH$ and $C \subset  \HH$ be nonempty, convex and compact. We denote $\delta_C := \sup_{(c_1,c_2)\in C^2}\|c_1-c_2\|\geq 0$ and  $\mu_C := \sup_{c\in C}\|c\|\geq 0$. Take any positive real number $K$ and take $v \in \lmo_C(x)$. For any $\lambda > 0$, take
+    \[p' \in \Kproj_C(-\lambda x).\]
+
+    Then we have that,
+    \[0 \leq \scal{p'}{x} - \scal{v}{x} \leq \frac{K + \delta_C^2/2+ \min\{\mu_C \delta_C, \mu_C^2\}}{\lambda}.\]
+
+    In consequence, we have that for any $\varepsilon > 0$, if $\lambda \geq \frac{K + \delta_C^2/2 + \min\{\mu_C \delta_C, \mu_C^2\}}{\varepsilon}$, then
+    \[0 \leq \scal{p'}{x} - \min_{c \in C} \scal{c}{x} \leq \epsilon.\]
+
+    We conclude that 
+    \[\Kproj(-\lambda x) \subset \epsmin(x).\]
+\end{theorem}
+
+\begin{proof}
+    By proposition \ref{p:projlmo}, we have that
+    \[\scal{c - p'}{-\lambda x - p'} \leq K + \frac{1}{2} \|c - p'\|^2, \forall \; c \in C.\]
+    Then, and take $c = v$,
+    \[\lambda\scal{p'}{x} - \lambda\scal{v}{x} \leq K + \frac{1}{2} \|v - p'\|^2 + \scal{p'}{v - p'}.
+
+    Next,
+    \\
+        \lambda\scal{p' - v}{x} \leq& K + \frac{1}{2} \|v - p'\|^2+ \scal{p'}{v - p'}\\
+        =& K +\frac{1}{2} \|v - p'\|^2+ (\scal{v}{p'} - \scal{p'}{p'})\\
+        \leq& K + \frac{1}{2} \|v - p'\|^2+\|p'\|(\|v\| - \|p'\|)\\
+        \leq& K + \frac{1}{2} \|v - p'\|^2+\|p'\| \|v - p'\|.
+
+    Therefore, \\
+    \lambda\scal{p' - v}{x} \leq K + \frac{1}{2}\delta_C^2 +  \min\{\mu_C\delta_C, \mu_C^2\}.
+
+    Hence,
+    \[0 \leq \scal{p'}{x} - \scal{v}{x} \leq \frac{K + \frac{1}{2} \delta_C^2 + \min\{\mu_C \delta_C, \mu_C^2\}}{\lambda},\]
+    where the first inequality is from the fact that $v \in \lmo_C(x)$.
+    \qed
+\end{proof}
+
+\subsection{Comparison Theory for exact problem solvers}
+
+\begin{definition}
+    Assume that  $C \subset \HH$ is a nonempty compact convex set, $0 \in C$, and let
+    \[f_C: \HH \rightarrow 2^C \; , \; g_C: \HH \rightarrow 2^C.\]
+
+    Suppose that $I_C : \HH \rightarrow \{0 , +\infty\}$ is the indicator function of $C$, that is 
+    \[I_C(x) = \begin{cases}
+    0 & \text{if } x \in C \\
+    \infty & \text{if } x \notin C
+    \end{cases}
+    \]
+
+    We say that evaluating $f_c$ is not significantly harder that evaluating $g_C$, denoted as $f_C \preceq g_C$, if there is a function $F : 2^{\HH} \rightarrow 2^{\HH}$, which does not depend on $C$, and a sequence of points $\{x_n: \HH \rightarrow \HH\}_{n = 1}^{+\infty}$, such that $\forall \; x \in \HH, \;\exists N(x) \in \mathbb{Z}_{\geq 1}$, such that \[f_C(x) \supset F(g_C(x_n(x))), \forall \; n \geq N(x).\]
+\end{definition}
+
+Under this notation we can write proposition 3 of \cite{Woodstock_2025} in the following precise way, 
+
+\begin{proposition}
+    Take $\HH = \mathbb{R}^n$, then for any $C \in \mathcal{P} := \{\{x \in \HH | Ax \leq b\} | A \in \mathbb{R}^{n \times m}, b \in \mathbb{R}^m\}$, we have that $\lmo_C \preceq \proj_C$.
+\end{proposition}
+
+
+% Non-BibTeX users please use
+\bibliographystyle{siam}
+\bibliography{Frank-Wolfe}
+
+\end{document}
+% end of file template.tex
+              </pre>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="py-4 bg-dark text-white-50">
+    <div class="container text-center">
+      <small>&copy; 2025 Tao Hu. All rights reserved.</small>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
+</html>
