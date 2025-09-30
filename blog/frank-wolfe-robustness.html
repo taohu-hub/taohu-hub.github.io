@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Exploring the Robustness of the Frank-Wolfe Method | Tao Hu</title>
+  <title>Properties of Frank-Wolfe's Method and LMO | Tao Hu</title>
   <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -35,8 +35,8 @@
   <header class="blog-hero">
     <div class="overlay"></div>
     <div class="container text-center text-white">
-      <h1 class="display-5">Exploring the Robustness of the Frank-Wolfe Method</h1>
-      <p class="lead">Frank-Wolfe with inexact or stochastic gradients, and a comparison between Linear Minimization Oracles and projections.</p>
+      <h1 class="display-5">Properties of Frank-Wolfe's Method and Linear Minimization Oracle</h1>
+      <p class="lead">IEOR 262B final project (UC Berkeley visiting student) exploring robustness of Frank-Wolfe and the cost of LMOs versus projections.</p>
       <div class="blog-meta">
         <span><i class="bi bi-calendar-event"></i> March 2025</span>
         <span><i class="bi bi-tag"></i> Optimization</span>
@@ -51,203 +51,223 @@
           <article class="blog-post">
             <section class="mb-5">
               <h2>Abstract</h2>
-              <p class="mb-3">This note studies the robustness of the Frank-Wolfe (FW) method when the gradient information is inexact, stochastic, or heavy-tailed. We also revisit the computational relationship between projections and linear minimization oracles (LMOs). The analysis highlights three contributions:</p>
-              <ul>
-                <li><strong>Frank-Wolfe with a directional \(\delta\)-oracle.</strong> For smooth nonconvex objectives over a compact convex set, FW converges to an \(\mathcal{O}(\delta)\) neighborhood in terms of the FW gap while retaining the \(\mathcal{O}(1/\sqrt{k})\) rate.</li>
-                <li><strong>Frank-Wolfe with a \((\delta, L)\)-oracle.</strong> The FW gap deteriorates to \(\mathcal{O}(\sqrt{\delta})\) under this oracle; we prove this rate is order-wise tight.</li>
-                <li><strong>Projection vs.&nbsp;LMO.</strong> A single \(K\)-approximate projection of a scaled point certifies an \(\varepsilon\)-accurate LMO, showing projections are never easier to approximate than LMOs.</li>
-              </ul>
-              <p>Throughout the post we adopt the notation \(\langle \cdot, \cdot \rangle\) for the Euclidean inner product and write \(\|\cdot\|\) for its induced norm. The feasible region \(Q\subset\mathbb{R}^d\) is compact and convex, and the function \(h:Q\to\mathbb{R}\) is concave unless stated otherwise.</p>
+              <p class="mb-3">This note records my IEOR 262B final project as a visiting student at UC Berkeley. I examine the robustness of the Frank-Wolfe method under inexact or stochastic gradients and compare projection operators with the linear minimization oracle.</p>
+              <p class="mb-0"><strong>Keywords:</strong> Frank-Wolfe, conditional gradients, inexact oracle, stochastic optimization, heavy-tailed noise, projection vs.&nbsp;LMO.</p>
             </section>
 
             <section class="mb-5">
               <h2 id="introduction">1.&nbsp;Introduction and related work</h2>
-              <div class="mb-3">
-                <h3 class="h5">Background</h3>
-                <p>Consider the constrained maximization problem</p>
-                <p class="math-display">\[\max_{\lambda\in Q} h(\lambda)\]</p>
-                <p>with compact convex \(Q\subset\mathbb{R}^d\) and differentiable \(h\). The classical Frank-Wolfe method iteratively linearizes \(h\) at \(\lambda_k\), solves the linear subproblem</p>
-                <p class="math-display">\[\tilde{\lambda}_k \in \arg\max_{\lambda\in Q} \big\{h(\lambda_k) + \nabla h(\lambda_k)^\top (\lambda-\lambda_k)\big\},\]</p>
-                <p>and performs the update</p>
-                <p class="math-display">\[\lambda_{k+1} = (1-\bar{\alpha}_k)\lambda_k + \bar{\alpha}_k \tilde{\lambda}_k, \qquad \bar{\alpha}_k\in[0,1).\]</p>
-                <p>With an \(L\)-Lipschitz gradient and feasible set diameter \(D\), Frank-Wolfe enjoys the familiar \(\mathcal{O}(LD^2/k)\) convergence rate <span class="text-muted">(Jaggi, 2013; Freund &amp; Grigas, 2013)</span>. Auxiliary sequences frequently used in the analysis are</p>
-                <p class="math-display">\[\beta_k = \frac{1}{\prod_{j=1}^{k-1}(1-\bar{\alpha}_j)}, \qquad \alpha_k = \frac{\beta_k \bar{\alpha}_k}{1-\bar{\alpha}_k}, \qquad k\ge 1,\]</p>
-                <p>with the conventions \(\prod_{j=1}^0(\cdot)=1\) and \(\sum_{j=1}^0(\cdot)=0\).</p>
+              <p><strong>Background.</strong> Let \(Q\subset\mathbb{R}^d\) be a compact convex set and \(h:Q\to\mathbb{R}\) be the objective function. Our goal is to solve the maximization problem</p>
+              <p class="math-display">\[\max_{\lambda\in Q} h(\lambda).\]</p>
+              <p>The Frank-Wolfe method computes at \(\lambda_k\in Q\) the linearization point</p>
+              <p class="math-display">\[\tilde{\lambda}_k\in \arg\max_{\lambda\in Q}\Big\{h(\lambda_k)+\nabla h(\lambda_k)^\top(\lambda-\lambda_k)\Big\}\]</p>
+              <p>and updates \(\lambda_{k+1}=(1-\bar{\alpha}_k)\lambda_k+\bar{\alpha}_k \tilde{\lambda}_k\) with \(\bar{\alpha}_k\in[0,1)\). When \(\nabla h\) is \(L\)-Lipschitz on \(Q\) and \(Q\) has diameter \(D\), the method achieves the classical \(\mathcal{O}(LD^2/k)\) rate (Jaggi, 2013; Freund and Grigas, 2013). Auxiliary sequences often appear in the analysis:</p>
+              <p class="math-display">\[\beta_k = \frac{1}{\prod_{j=1}^{k-1} (1-\bar{\alpha}_j)},\qquad \alpha_k = \frac{\beta_k \bar{\alpha}_k}{1- \bar{\alpha}_k}, \qquad k \ge 1,\]</p>
+              <p>where we follow the conventions \(\prod_{j=1}^0 (\cdot) = 1\) and \(\sum_{i=1}^0 (\cdot) = 0\).</p>
+              <div class="algorithm mb-4">
+                <div class="algorithm-header">Algorithm 1 &mdash; Frank-Wolfe method for maximizing \(h(\lambda)\)</div>
+                <ol class="algorithm-steps">
+                  <li>Pick initial point \(\lambda_0 \in Q\), initial upper bound \(U_{\mathrm{init}}\) (usually determined by prior knowledge, if no prior knowledge is assumed, set \(U_{\mathrm{init}} = +\infty\)), and take \(k \leftarrow 0\).</li>
+                  <li>Evaluate \(\nabla h(\lambda_k)\).</li>
+                  <li>Compute \(\tilde{\lambda}_k = \arg\max_{\lambda \in Q}\{h(\lambda_k) + \nabla h(\lambda_k)^\top(\lambda - \lambda_k)\}\).</li>
+                  <li>Set \(U_k^w = h(\lambda_k) + \nabla h(\lambda_k)^\top(\tilde{\lambda}_k - \lambda_k)\) and \(G_k = \nabla h(\lambda_k)^\top(\tilde{\lambda}_k - \lambda_k)\).</li>
+                  <li>Update \(U_k = \min\{U_{k - 1}, U_k^{w}\}\) if \(k \geq 1\) and \(U_0 = \min\{U_{\mathrm{init}}, U_0^{w}\}\) if \(k = 0\).</li>
+                  <li>Set \(\lambda_{k+1} = \lambda_k + \bar{\alpha}_k(\tilde{\lambda}_k - \lambda_k)\) with \(\bar{\alpha}_0 = 1\) and \(\bar{\alpha}_k \in [0,1)\) for all \(k \ge 1\).</li>
+                </ol>
               </div>
-              <div class="mb-3">
-                <h3 class="h5">Inexact information</h3>
-                <p>How robust is Frank-Wolfe to inaccurate gradient information? With unbiased stochastic gradients and bounded variance, stochastic Frank-Wolfe algorithms converge in expectation at rate \(\mathcal{O}(1/\sqrt{k})\). Variance-reduced variants recover linear rates in structured settings <span class="text-muted">(Hazan &amp; Luo, 2016; Reddi et&nbsp;al., 2016; Goldfarb et&nbsp;al., 2017; Lu &amp; Freund, 2018; Locatello et&nbsp;al., 2019; Zhang et&nbsp;al., 2020)</span>. Under heavy-tailed noise, robust estimators and gradient clipping provide high-probability guarantees <span class="text-muted">(Tang et&nbsp;al., 2022; Sfyraki &amp; Wang, 2025)</span>. Deterministically, if the gradient noise is uniformly bounded by \(\delta\), Frank &amp; Grigas (2013) show nonaccumulation of the error and an \(\mathcal{O}(1/k + \delta)\) rate.</p>
-                <p>We examine two oracle models. A <em>directional \(\delta\)-oracle</em> returns \(g_\delta(\bar{\lambda})\) satisfying</p>
-                <p class="math-display">\[\big|\big(\nabla h(\bar{\lambda}) - g_\delta(\bar{\lambda})\big)^\top(\lambda-\bar{\lambda})\big| \le \delta, \qquad \forall \lambda\in Q.\]</p>
-                <p>Frank &amp; Grigas (2013) prove that maximizing \(g_\delta(\bar{\lambda})^\top\lambda\) yields a \(2\delta\)-accurate solution to the true linear oracle, which together with Wolfe bounds controls error accumulation.</p>
-                <p>The second model is the <em>\((\delta, L)\)-oracle</em> of Devolder, Glineur, and Nesterov (2014). It returns \((h_{\delta,L}(\bar{\lambda}), g_{\delta,L}(\bar{\lambda}))\) obeying both an upper quadratic model with curvature \(L\) and a lower affine model with additive error \(\delta\). Unlike the previous oracle, this model allows the error to interact with the quadratic term and leads to a Frank-Wolfe gap that stagnates at order \(\sqrt{\delta}\). We provide an explicit construction demonstrating the tightness of this barrier.</p>
-              </div>
-              <div>
-                <h3 class="h5">Linear minimization oracle versus projection</h3>
-                <p>Although Frank-Wolfe lacks a guarantee comparable to proximal gradient methods under a \((\delta, L)\)-oracle, it offers a computational advantage: the linear minimization oracle is often cheaper than projections. Woodstock (2025) showed that exact projection is never easier than computing an \(\varepsilon\)-accurate LMO. We extend this perspective and show that even coarse projections (with accuracy parameter \(K\)) can certify accurate LMOs after scaling.</p>
-              </div>
+              <p><strong>Inexact information.</strong> A central question is the robustness of Frank-Wolfe under inexact gradients. With unbiased gradients and bounded variance (or sub-Gaussian tails), stochastic Frank-Wolfe variants achieve \(\mathcal{O}(1/\sqrt{k})\) rates; variance reduction yields faster rates under additional structure (Hazan and Luo, 2016; Reddi et&nbsp;al., 2016; Goldfarb et&nbsp;al., 2017; Lu and Freund, 2018; Locatello et&nbsp;al., 2019; Zhang et&nbsp;al., 2020). For heavy-tailed noise, robust stochastic Frank-Wolfe with clipping or robust estimation attains high-probability guarantees (Tang et&nbsp;al., 2022; Sfyraki and Wang, 2025). For deterministic noise bounded by \(\delta\) the classical analysis of Freund and Grigas (2013) applies. We also consider objective functions that are convex but non-smooth and can be accessed through a \((\delta, L)\)-oracle.</p>
+              <p>Two oracle models are of interest. A <em>\(\delta\)-oracle</em> returns \(g_{\delta}(\bar{\lambda})\) such that, for all \(\lambda,\bar{\lambda}\in Q\),</p>
+              <p class="math-display">\[\big|\big(\nabla h(\bar{\lambda})-g_{\delta}(\bar{\lambda})\big)^\top(\lambda-\bar{\lambda})\big| \le \delta.\]</p>
+              <p>The second is the <em>\((\delta,L)\)-oracle</em> of Devolder, Glineur, and Nesterov (2014), which returns \((h_{\delta,L}(\bar{\lambda}), g_{\delta,L}(\bar{\lambda}))\) satisfying first-order upper and lower models with curvature \(L\) and additive error \(\delta\). This oracle permits accumulation of errors and will be analyzed in Section&nbsp;4.</p>
+              <p><strong>LMO vs.&nbsp;projection.</strong> The linear minimization oracle is often easier to compute than projections. Set-specific comparisons appear in Combettes and Pokutta (2021) and Pokutta (2024), while Woodstock (2025) showed that exact projection is never easier than obtaining an \(\varepsilon\)-accurate LMO. We extend this observation to approximate projections: a single \(K\)-projection at a scaled point yields an \(\varepsilon\)-accurate LMO.</p>
+              <p><strong>Our contributions.</strong></p>
+              <ol class="mb-0">
+                <li><em>Frank-Wolfe with a \(\delta\)-oracle (nonconvex).</em> For \(L\)-smooth nonconvex \(f\) over a compact convex set we show that Frank-Wolfe with a directional \(\delta\)-oracle achieves
+                  <p class="math-display">\[\min_{0\le k\le K} g(x^k) \le \sqrt{\frac{2C\,\big(f(x^0)-f_{\inf}\big)}{K+1}} + 4\delta,\]</p>
+                  <p class="mb-2">which is the standard \(\mathcal{O}(1/\sqrt{K})\) rate to an \(\mathcal{O}(\delta)\) neighborhood in the Frank-Wolfe gap.</p>
+                </li>
+                <li><em>Frank-Wolfe with a \((\delta,L)\)-oracle.</em> We prove that Frank-Wolfe attains a Frank-Wolfe gap of \(\mathcal{O}(\sqrt{\delta})\) and provide a counterexample showing that this order cannot be improved.</li>
+                <li><em>Projection vs.&nbsp;LMO.</em> We show that a \(K\)-approximate projection at \(-\lambda x\) produces an \(\varepsilon\)-accurate LMO at \(x\) with \(\varepsilon = \mathcal{O}((K + \delta_C^2)/\lambda)\), so coarse projections are not cheaper than accurate LMOs.</li>
+              </ol>
             </section>
 
             <section class="mb-5">
-              <h2 id="delta-oracle">2.&nbsp;Frank-Wolfe with a \(\delta\)-oracle</h2>
-              <p>We fix a concave \(h\) with \(L\)-Lipschitz gradient on compact convex \(Q\) of diameter \(D\). Frank-Wolfe equipped with a \(\delta\)-oracle (Algorithm&nbsp;1) queries the approximate gradient at every iterate and maximizes the linearization constructed with \(g_\delta\).</p>
+              <h2 id="delta-oracle">2.&nbsp;Frank-Wolfe with a \(\delta\)-oracle: main result and a tight example</h2>
+              <p>Assume \(Q\subset\mathbb{R}^d\) is compact and convex with diameter \(D\), and \(h:Q\to\mathbb{R}\) is concave with \(L\)-Lipschitz gradient. We run Frank-Wolfe using the \(\delta\)-oracle in the linearization.</p>
               <div class="algorithm mb-4">
-                <div class="algorithm-header">Algorithm 1 &mdash; Frank-Wolfe with a gradient \(\delta\)-oracle (maximization)</div>
+                <div class="algorithm-header">Algorithm 2 &mdash; Frank-Wolfe with a gradient \(\delta\)-oracle (maximization)</div>
                 <ol class="algorithm-steps">
                   <li>Initialize \(\lambda_0\in Q\).</li>
-                  <li>For \(k=0,1,2,\dots\):
-                    <ol>
-                      <li>Query \(g_\delta(\lambda_k)\).</li>
-                      <li>Compute \(\tilde{\lambda}_k \in \arg\max_{\lambda\in Q} \{h(\lambda_k) + g_\delta(\lambda_k)^\top (\lambda-\lambda_k)\}\).</li>
-                      <li>Update \(\lambda_{k+1} = \lambda_k + \bar{\alpha}_k (\tilde{\lambda}_k - \lambda_k)\) with \(\bar{\alpha}_k\in[0,1)\).</li>
-                    </ol>
-                  </li>
+                  <li>For \(k = 0,1,2,\ldots\):</li>
+                  <li class="ms-4">Query \(g_{\delta}(\lambda_k)\).</li>
+                  <li class="ms-4">Compute \(\tilde{\lambda}_k\in\arg\max_{\lambda\in Q}\big\{h(\lambda_k)+g_{\delta}(\lambda_k)^\top(\lambda-\lambda_k)\big\}\).</li>
+                  <li class="ms-4">Update \(\lambda_{k+1}=\lambda_k+\bar{\alpha}_k(\tilde{\lambda}_k-\lambda_k)\) with \(\bar{\alpha}_k\in[0,1)\).</li>
                 </ol>
               </div>
-              <p>The approximate linear maximization preserves Wolfe's upper bound.</p>
+              <p>We first transfer the Wolfe upper bound under a \(\delta\)-oracle.</p>
               <div class="theorem-block">
-                <h4>Lemma 1 (Wolfe bound transfer)</h4>
-                <p>If \(g_\delta\) satisfies the \(\delta\)-oracle condition, then for every iterate \(\lambda_k\in Q\)</p>
-                <p class="math-display">\[h^* \le h(\lambda_k) + \max_{\lambda\in Q} g_\delta(\lambda_k)^\top (\lambda-\lambda_k) + \delta.\]</p>
+                <h4>Lemma&nbsp;1 (Wolfe bound transfer under a \(\delta\)-oracle)</h4>
+                <p>For any \(\lambda_k\in Q\),</p>
+                <p class="math-display">\[h^* \le h(\lambda_k) + \max_{\lambda\in Q} g_{\delta}(\lambda_k)^\top(\lambda-\lambda_k) + \delta.\]</p>
+                <p><strong>Proof.</strong> By smoothness, \(h(\lambda) \le h(\lambda_k) + \nabla h(\lambda_k)^\top(\lambda-\lambda_k)\). The oracle inequality ensures \(\nabla h(\lambda_k)^\top(\lambda-\lambda_k) \le g_{\delta}(\lambda_k)^\top(\lambda-\lambda_k) + \delta\). Maximizing over \(\lambda\in Q\) yields the claim. \(\square\)</p>
               </div>
-              <p>Moreover, solving the subproblem with \(g_\delta\) yields near-optimality with respect to the true gradient.</p>
+              <p>We also recall a subproblem accuracy transfer.</p>
               <div class="theorem-block">
-                <h4>Proposition 1 (Frank &amp; Grigas, 2013)</h4>
-                <p>If \(\tilde{\lambda}\) maximizes \(g_\delta(\bar{\lambda})^\top \lambda\), then</p>
-                <p class="math-display">\[\nabla h(\bar{\lambda})^\top \tilde{\lambda} \ge \max_{\lambda\in Q} \nabla h(\bar{\lambda})^\top \lambda - 2\delta.\]</p>
+                <h4>Proposition&nbsp;1 (Freund &amp; Grigas, 2013)</h4>
+                <p>If \(\tilde{\lambda}\in\arg\max_{\lambda\in Q} g_{\delta}(\bar{\lambda})^\top\lambda\), then</p>
+                <p class="math-display">\[\nabla h(\bar{\lambda})^\top\tilde{\lambda} \ge \max_{\lambda\in Q} \nabla h(\bar{\lambda})^\top\lambda - 2\delta.\]</p>
               </div>
-              <p>Combining these properties yields nonaccumulation of the oracle error.</p>
               <div class="theorem-block">
-                <h4>Theorem 1</h4>
-                <p>Suppose \(\sum_k \bar{\alpha}_k = \infty\) with \(\bar{\alpha}_k \downarrow 0\). Then the iterates satisfy</p>
-                <p class="math-display">\[h^* - h(\lambda_{k+1}) \le (1-\bar{\alpha}_k)(h^* - h(\lambda_k)) + 2\bar{\alpha}_k \delta + \tfrac{1}{2} L D^2 \bar{\alpha}_k^2,\]</p>
+                <h4>Theorem&nbsp;2 (Nonaccumulation under a \(\delta\)-oracle)</h4>
+                <p>Let \(Q\) be compact convex with diameter \(D\), and let \(h\) be concave with \(L\)-Lipschitz gradient on \(Q\). Suppose \(g_{\delta}\) satisfies the \(\delta\)-oracle condition. For the iterates of Algorithm&nbsp;2 with open-loop step sizes satisfying \(\sum_k \bar{\alpha}_k = \infty\) and \(\bar{\alpha}_k \downarrow 0\),</p>
+                <p class="math-display">\[h^* - h(\lambda_{k+1}) \le (1-\bar{\alpha}_k)\big(h^* - h(\lambda_k)\big) + 2\bar{\alpha}_k\delta + \tfrac{1}{2} LD^2 \bar{\alpha}_k^2,\]</p>
                 <p>and consequently \(\limsup_{k\to\infty} (h^* - h(\lambda_k)) \le 2\delta\).</p>
+                <p><strong>Proof.</strong> From Lipschitz smoothness and the oracle condition, we obtain</p>
+                <p class="math-display">\begin{aligned}
+                  h(\lambda_{k+1}) &\ge h(\lambda_k) + g_{\delta}(\lambda_k)^\top (\lambda_{k+1} - \lambda_k) - \delta - \tfrac{1}{2} L \|\lambda_{k+1} - \lambda_k\|^2 \\
+                  &= h(\lambda_k) + \bar{\alpha}_k g_{\delta}(\lambda_k)^\top (\tilde{\lambda}_k - \lambda_k) - \delta - \tfrac{1}{2} L \bar{\alpha}_k^2 \|\tilde{\lambda}_k - \lambda_k\|^2 \\
+                  &\ge (1-\bar{\alpha}_k) h(\lambda_k) + \bar{\alpha}_k\big(h(\lambda_k) + g_{\delta}(\lambda_k)^\top(\tilde{\lambda}_k - \lambda_k) + \delta\big) \\
+                  &\quad - 2\bar{\alpha}_k \delta - \tfrac{1}{2} L D^2 \bar{\alpha}_k^2 \\
+                  &\ge (1-\bar{\alpha}_k) h(\lambda_k) + \bar{\alpha}_k h^* - 2\bar{\alpha}_k\delta - \tfrac{1}{2} L D^2 \bar{\alpha}_k^2,
+                \end{aligned}</p>
+                <p>where we used \(\|\tilde{\lambda}_k - \lambda_k\| \le D\) and Lemma&nbsp;1 in the final step. Subtracting from \(h^*\) yields the inequality. The stated limit follows by unrolling the recurrence. \(\square\)</p>
               </div>
-              <p>This bound is tight up to constants.</p>
-              <div class="example-block">
-                <h4>Example 1</h4>
-                <p>Let \(Q=[-1,1]\) and \(h(\lambda) = -\tfrac{1}{2}(\lambda-1)^2\) (so \(L=1\) and \(D=2\)). Define \(g_\delta(\lambda) = \nabla h(\lambda) + \tfrac{\delta}{D}\,\operatorname{sign}(\lambda)\). With \(\bar{\alpha}_k = 2/(k+2)\), the iterates converge to a neighborhood whose width is proportional to \(\delta\).</p>
+              <div class="theorem-block">
+                <h4>Example&nbsp;1 (Tightness up to constants)</h4>
+                <p>Let \(Q = [-1,1]\) and \(h(\lambda) = -\tfrac{1}{2} (\lambda - 1)^2\), so \(L = 1\) and \(D = 2\). Define a \(\delta\)-oracle by \(g_{\delta}(\lambda) = \nabla h(\lambda) + \tfrac{\delta}{D} \operatorname{sign}(\lambda)\). Frank-Wolfe with \(\bar{\alpha}_k = 2/(k+2)\) converges to a neighborhood whose size is proportional to \(\delta\).</p>
               </div>
             </section>
 
             <section class="mb-5">
               <h2 id="nonconvex">3.&nbsp;Nonconvex objectives with a directional \(\delta\)-oracle</h2>
-              <p>Consider a differentiable, potentially nonconvex objective \(f\) with \(L\)-Lipschitz gradient over compact convex \(S\subset\mathbb{R}^d\) of diameter \(D\). The Frank-Wolfe gap at \(x\) is</p>
+              <p>We now consider nonconvex minimization over a compact convex set \(S\subset\mathbb{R}^d\): \(\min_{x\in S} f(x)\). Assume \(f\) is differentiable with \(L\)-Lipschitz gradient on \(S\). Let \(D = \operatorname{Diam}(S)\) and define \(G = \sup_{x\in S}\|\nabla f(x)\|\) and \(C = \max\{LD^2, GD\}\). The Frank-Wolfe gap at \(x\) is</p>
               <p class="math-display">\[g(x) = \max_{s\in S} \langle \nabla f(x), x - s \rangle.\]</p>
-              <p>A directional \(\delta\)-oracle returns \(g_\delta(x)\) satisfying</p>
-              <p class="math-display">\[\big|\langle \nabla f(x) - g_\delta(x), s - x \rangle\big| \le \delta, \qquad \forall s\in S.\]</p>
-              <p>Let \(\tilde{g}(x) = \max_{s\in S} \langle g_\delta(x), x - s \rangle\) and choose \(s_\delta(x)\) achieving this maximum. Then</p>
-              <p class="math-display">\[|g(x) - \tilde{g}(x)| \le \delta, \qquad \langle \nabla f(x), x - s_\delta(x) \rangle \ge \tilde{g}(x) - \delta.\]</p>
-              <p>The following adaptive stepsize variant mirrors the classical FW line-search.</p>
+              <p>We assume access to a <em>directional \(\delta\)-oracle</em>, i.e., for every \(x\in S\) there exists \(g_{\delta}(x)\) such that</p>
+              <p class="math-display">\[\big|\langle \nabla f(x) - g_{\delta}(x), s - x \rangle\big| \le \delta, \qquad \forall s \in S.\]</p>
+              <p>Define the approximate Frank-Wolfe gap \(\tilde{g}(x) = \max_{s\in S} \langle g_{\delta}(x), x - s \rangle\). Then</p>
+              <p class="math-display">\[|g(x) - \tilde{g}(x)| \le \delta, \qquad \langle \nabla f(x), x - s_{\delta}(x) \rangle \ge \tilde{g}(x) - \delta,\]</p>
+              <p>where \(s_{\delta}(x)\in\arg\max_{s\in S} \langle g_{\delta}(x), x - s \rangle\).</p>
               <div class="algorithm mb-4">
-                <div class="algorithm-header">Algorithm 2 &mdash; Nonconvex Frank-Wolfe with a directional \(\delta\)-oracle</div>
+                <div class="algorithm-header">Algorithm 3 &mdash; Nonconvex Frank-Wolfe with a directional \(\delta\)-oracle</div>
                 <ol class="algorithm-steps">
-                  <li>Input: initial point \(x^0\in S\), curvature constant \(C \ge \max\{L D^2, G D\}\) with \(G = \sup_{x\in S} \|\nabla f(x)\|\), error level \(\delta\ge 0\).</li>
-                  <li>For \(k=0,1,2,\dots\):
-                    <ol>
-                      <li>Query \(g_\delta(x^k)\) and compute \(s^k \in \arg\max_{s\in S} \langle g_\delta(x^k), x^k - s \rangle\).</li>
-                      <li>Let \(\tilde{g}_k = \langle g_\delta(x^k), x^k - s^k \rangle\).</li>
-                      <li>Set \(\bar{\alpha}_k = \min\{ (\tilde{g}_k - 2\delta)_+ / C,\, 1\}\).</li>
-                      <li>Update \(x^{k+1} = x^k + \bar{\alpha}_k (s^k - x^k)\).</li>
-                    </ol>
-                  </li>
+                  <li><strong>Input:</strong> \(x^0\in S\), curvature constant \(C \ge \max\{LD^2, GD\}\), error level \(\delta \ge 0\).</li>
+                  <li>For \(k = 0,1,2,\ldots\):</li>
+                  <li class="ms-4">Obtain \(g_{\delta}(x^k)\) satisfying the directional inequality and set \(s^k\in\arg\max_{s\in S} \langle g_{\delta}(x^k), x^k - s \rangle\); let \(\tilde{g}_k = \langle g_{\delta}(x^k), x^k - s^k \rangle\).</li>
+                  <li class="ms-4">Choose the step size \(\bar{\alpha}_k = \min\{(\tilde{g}_k - 2\delta)_+/C, 1\}\), where \((u)_+ = \max\{u, 0\}\).</li>
+                  <li class="ms-4">Update \(x^{k+1} = x^k + \bar{\alpha}_k (s^k - x^k)\).</li>
                 </ol>
               </div>
-              <p>A one-step descent bound follows from smoothness.</p>
               <div class="theorem-block">
-                <h4>Lemma 2</h4>
-                <p>The iterates satisfy \(f(x^{k+1}) \le f(x^k) - (\tilde{g}_k - 2\delta)_+^2/(2C)\).</p>
+                <h4>Lemma&nbsp;2 (One-step decrease)</h4>
+                <p>The iterates of Algorithm&nbsp;3 satisfy</p>
+                <p class="math-display">\[f(x^{k+1}) \le f(x^k) - \frac{(\tilde{g}_k - 2\delta)_+^2}{2C}.\]</p>
+                <p><strong>Proof.</strong> Lipschitz smoothness yields</p>
+                <p class="math-display">\begin{aligned}
+                  f(x^{k+1}) &\le f(x^k) + \bar{\alpha}_k \langle \nabla f(x^k), s^k - x^k \rangle + \tfrac{L}{2} \bar{\alpha}_k^2 \|s^k - x^k\|^2 \\
+                  &\le f(x^k) - \bar{\alpha}_k (g(x^k) - \delta) + \tfrac{C}{2} \bar{\alpha}_k^2,
+                \end{aligned}</p>
+                <p>where we used \(\|s^k - x^k\| \le D\) and the directional oracle. Since \(g(x^k) \ge \tilde{g}_k - \delta\), we have</p>
+                <p class="math-display">\[f(x^{k+1}) \le f(x^k) - \bar{\alpha}_k (\tilde{g}_k - 2\delta) + \tfrac{C}{2} \bar{\alpha}_k^2.\]</p>
+                <p>With \(\bar{\alpha}_k = (\tilde{g}_k - 2\delta)_+/C\), the result follows because \(\bar{\alpha}_k = 0\) whenever \(\tilde{g}_k - 2\delta \le 0\). \(\square\)</p>
               </div>
-              <p>Summing the descent inequality delivers the global rate.</p>
               <div class="theorem-block">
-                <h4>Theorem 2</h4>
-                <p>For all \(K\ge 0\),</p>
-                <p class="math-display">\[\min_{0\le k\le K} g(x^k) \le \sqrt{\frac{2C(f(x^0) - f_{\inf})}{K+1}} + 3\delta,\]</p>
-                <p>where \(f_{\inf} = \inf_{x\in S} f(x)\). To reach FW gap at most \(\varepsilon > 4\delta\), it suffices to take \(K+1 \ge 2C(f(x^0) - f_{\inf})/(\varepsilon - 3\delta)^2\).</p>
+                <h4>Theorem&nbsp;3 (Directional \(\delta\)-oracle for nonconvex objectives)</h4>
+                <p>Let \(f\) be \(L\)-smooth on a compact convex set \(S\) of diameter \(D\) and choose \(C \ge \max\{LD^2, GD\}\). Suppose the directional \(\delta\)-oracle is available. Then for all \(K \ge 0\), the iterates of Algorithm&nbsp;3 obey</p>
+                <p class="math-display">\[\min_{0\le k\le K} g(x^k) \le \sqrt{\frac{2C\,\big(f(x^0) - f_{\inf}\big)}{K+1}} + 3\delta,\]</p>
+                <p>where \(f_{\inf} = \inf_{x\in S} f(x)\). Consequently, to reach a Frank-Wolfe gap at most \(\varepsilon > 4\delta\) it suffices to take \(K + 1 \ge 2C\big(f(x^0) - f_{\inf}\big)/(\varepsilon - 3\delta)^2\).</p>
+                <p><strong>Proof.</strong> Summing Lemma&nbsp;2 from \(k = 0\) to \(K\) gives</p>
+                <p class="math-display">\[\sum_{k=0}^K (\tilde{g}_k - 2\delta)_+^2 \le 2C\big(f(x^0) - f(x^{K+1})\big) \le 2C\big(f(x^0) - f_{\inf}\big).\]</p>
+                <p>Hence \(\min_{0\le k\le K} (\tilde{g}_k - 2\delta)_+ \le \sqrt{2C\big(f(x^0) - f_{\inf}\big)/(K+1)}\). Using \(g(x^k) \le \tilde{g}_k + \delta\) yields the desired bound. \(\square\)</p>
               </div>
-              <p>The result recovers the classical nonconvex FW rate when \(\delta = 0\) and shows that the algorithm remains stable under bounded oracle error.</p>
+              <p><strong>Remarks.</strong> When \(\delta = 0\) the classical nonconvex rate is recovered. For \(\delta > 0\), the method converges to an \(\mathcal{O}(\delta)\) neighborhood in the Frank-Wolfe gap. The stepsize uses \(\tilde{g}_k\), obtained while solving the LMO with \(g_{\delta}\). Any \(C \ge LD^2\) works in Lemma&nbsp;2; choosing \(C \ge \max\{LD^2, GD\}\) ensures \(\bar{\alpha}_k \le 1\) without additional truncation.</p>
             </section>
 
             <section class="mb-5">
-              <h2 id="delta-l">4.&nbsp;Frank-Wolfe with a \((\delta, L)\)-oracle</h2>
-              <p>The \((\delta, L)\)-oracle provides surrogate values \((h_{\delta,L}(\lambda), g_{\delta,L}(\lambda))\) satisfying</p>
-              <p class="math-display">\[\begin{aligned}
-                h(\lambda) &\le h_{\delta,L}(\bar{\lambda}) + \langle g_{\delta,L}(\bar{\lambda}), \lambda-\bar{\lambda} \rangle + \tfrac{L}{2}\|\lambda-\bar{\lambda}\|^2 + \delta,\\
-                h(\lambda) &\ge h_{\delta,L}(\bar{\lambda}) + \langle g_{\delta,L}(\bar{\lambda}), \lambda-\bar{\lambda} \rangle - \delta.
-              \end{aligned}\]</p>
-              <p>Algorithm&nbsp;3 augments FW with a running upper bound \(U_k\) built from Wolfe estimates.</p>
+              <h2 id="delta-L">4.&nbsp;Frank-Wolfe with a \((\delta,L)\)-oracle: accumulation made explicit</h2>
+              <p>We adopt the Devolder&ndash;Glineur&ndash;Nesterov \((\delta,L)\)-oracle for the concave function \(h\): for any \(\bar{\lambda}\in Q\) and \(\lambda\in Q\) the oracle returns \((h_{\delta,L}(\bar{\lambda}), g_{\delta,L}(\bar{\lambda}))\) obeying</p>
+              <p class="math-display">\begin{aligned}
+                h(\lambda) &\le h_{\delta,L}(\bar{\lambda}) + \langle g_{\delta,L}(\bar{\lambda}), \lambda - \bar{\lambda} \rangle + \tfrac{L}{2} \|\lambda - \bar{\lambda}\|^2 + \delta, \\
+                h(\lambda) &\ge h_{\delta,L}(\bar{\lambda}) + \langle g_{\delta,L}(\bar{\lambda}), \lambda - \bar{\lambda} \rangle - \delta.
+              \end{aligned}</p>
               <div class="algorithm mb-4">
-                <div class="algorithm-header">Algorithm 3 &mdash; Frank-Wolfe with a \((\delta, L)\)-oracle</div>
+                <div class="algorithm-header">Algorithm 4 &mdash; Frank-Wolfe with a \((\delta,L)\)-oracle (maximization)</div>
                 <ol class="algorithm-steps">
-                  <li>Initialize \(\lambda_0\in Q\) and \(U_0 = h(\lambda_0)\).</li>
-                  <li>For \(k=0,1,2,\dots\):
-                    <ol>
-                      <li>Query \((h_{\delta,L}(\lambda_k), g_{\delta,L}(\lambda_k))\).</li>
-                      <li>Compute \(\tilde{\lambda}_k = \arg\max_{\lambda\in Q} \langle g_{\delta,L}(\lambda_k), \lambda-\lambda_k \rangle\).</li>
-                      <li>Set \(U_k^w = h(\lambda_k) + \nabla h(\lambda_k)^\top (\tilde{\lambda}_k - \lambda_k)\) and \(U_{k+1} = \min\{U_k, U_k^w\}.\)</li>
-                      <li>Update \(\lambda_{k+1} = \lambda_k + \bar{\alpha}_k (\tilde{\lambda}_k - \lambda_k)\).</li>
-                    </ol>
-                  </li>
+                  <li>Initialize \(\lambda_0\in Q\) and \(U_0 = 0\).</li>
+                  <li>For \(k = 0,1,2,\ldots\):</li>
+                  <li class="ms-4">Query \((h_{\delta,L}(\lambda_k), g_{\delta,L}(\lambda_k))\).</li>
+                  <li class="ms-4">Compute \(\tilde{\lambda}_k\in\arg\max_{\lambda\in Q} \langle g_{\delta,L}(\lambda_k), \lambda - \lambda_k \rangle\) and set \(U_k^w = h(\lambda_k) + \nabla h(\lambda_k)^\top (\tilde{\lambda}_k - \lambda_k)\).</li>
+                  <li class="ms-4">Update \(\lambda_{k+1} = \lambda_k + \bar{\alpha}_k (\tilde{\lambda}_k - \lambda_k)\) with \(\bar{\alpha}_k\in[0,1)\) and set \(U_{k+1} = \min\{U_k, U_k^w\}\).</li>
                 </ol>
               </div>
-              <p>Let \(C = L D^2\). With the auxiliary sequences from the introduction, we obtain the following accumulation bound.</p>
               <div class="theorem-block">
-                <h4>Theorem 3</h4>
-                <p>For every \(k\ge 0\),</p>
-                <p class="math-display">\[U_{k+1} - h(\lambda_{k+1}) \le \frac{U_1 - h(\lambda_1)}{\beta_{k+1}} + \frac{\tfrac{1}{2}C \sum_{i=1}^k \alpha_i^2/\beta_{i+1}}{\beta_{k+1}} + \frac{2\delta \sum_{i=1}^k \beta_{i+1}}{\beta_{k+1}}.\]</p>
+                <h4>Theorem&nbsp;4 (Complexity with a \((\delta,L)\)-oracle)</h4>
+                <p>If Algorithm&nbsp;4 uses the step-size sequence \(\{\bar{\alpha}_k\}\), then for all \(k \ge 0\)</p>
+                <p class="math-display">\[U_{k+1} - h(\lambda_{k+1}) \le \frac{U_1 - h(\lambda_1)}{\beta_{k+1}} + \frac{\tfrac{1}{2} C \sum_{i=1}^k \alpha_i^2 / \beta_{i+1}}{\beta_{k+1}} + \frac{2\delta \sum_{i=1}^k \beta_{i+1}}{\beta_{k+1}},\]</p>
+                <p>where \(C = L D^2\).</p>
+                <p><strong>Proof.</strong> From the oracle relations we obtain</p>
+                <p class="math-display">\begin{aligned}
+                  h(\lambda_{k+1}) &\ge h(\lambda_k) + g_{\delta,L}(\lambda_k)^\top (\lambda_{k+1} - \lambda_k) - \delta - \tfrac{1}{2} L \|\lambda_{k+1} - \lambda_k\|^2 \\
+                  &= h(\lambda_k) + \bar{\alpha}_k g_{\delta,L}(\lambda_k)^\top (\tilde{\lambda}_k - \lambda_k) - \delta - \tfrac{1}{2} L \bar{\alpha}_k^2 \|\tilde{\lambda}_k - \lambda_k\|^2 \\
+                  &\ge (1 - \bar{\alpha}_k) h(\lambda_k) + \bar{\alpha}_k \big(h(\lambda_k) + g_{\delta,L}(\lambda_k)^\top (\tilde{\lambda}_k - \lambda_k) + \delta\big) \\
+                  &\quad - (1 + \bar{\alpha}_k) \delta - \tfrac{1}{2} C \bar{\alpha}_k^2 \\
+                  &\ge (1 - \bar{\alpha}_k) h(\lambda_k) + \bar{\alpha}_k U_k - 2\delta - \tfrac{1}{2} C \bar{\alpha}_k^2.
+                \end{aligned}</p>
+                <p>Hence</p>
+                <p class="math-display">\[U_k - h(\lambda_{k+1}) \le (1 - \bar{\alpha}_k)(U_{k-1} - h(\lambda_k)) + 2\delta + \tfrac{1}{2} C \bar{\alpha}_k^2.\]</p>
+                <p>Multiplying by \(\beta_k\) and summing gives</p>
+                <p class="math-display">\[\beta_k (U_k - h(\lambda_{k+1})) \le (U_0 - h(\lambda_1)) + 2\delta \sum_{j=1}^k \beta_j + \tfrac{1}{2} C \sum_{j=1}^k \bar{\alpha}_j^2 \beta_j.\]</p>
+                <p>Dividing by \(\beta_k\) yields the stated inequality. \(\square\)</p>
               </div>
-              <p>The final term reveals that the error accumulates multiplicatively with \(\beta_{k+1}\). As \(k\) grows, \((\beta_{k+1} - 1)/\beta_{k+1}\) approaches 1, implying that achieving a first-order accurate solution necessitates a second-order accurate oracle (i.e., \(\delta = o(1/k^2)\) under constant stepsizes).</p>
-              <div class="example-block">
-                <h4>Example 2</h4>
-                <p>Take constant stepsize \(\bar{\alpha}_k = \bar{\alpha}\) and \(\delta_i = \delta\). Then \(\beta_k = (1-\bar{\alpha})^{-k+1}\) and \(\alpha_k = \bar{\alpha}(1-\bar{\alpha})^{-k}\). Choosing \(\bar{\alpha} = 1 - (k-1)^{-1/(k-2)} \approx \log(k-1)/(k-2)\) yields</p>
-                <p class="math-display">\[U_{k+1} - h(\lambda_{k+1}) \le \tfrac{1}{2}C\left((1-\bar{\alpha})^{k-1} + \bar{\alpha}\right) + \frac{\delta}{\bar{\alpha}} \le \tfrac{1}{2}C\left(\frac{1}{k-1} + \frac{\log(k-1)}{k-2}\right) + \frac{\delta}{\bar{\alpha}}.\]</p>
-                <p>To preserve the \(\widetilde{\mathcal{O}}(1/k)\) convergence rate, the oracle accuracy must scale as \(\delta = \mathcal{O}(\log k / k^2)\).</p>
-              </div>
-              <div class="example-block">
-                <h4>Example 3</h4>
-                <p>We further construct a family of instances showing that no exponent \(\alpha &gt; 1/2\) can guarantee a Frank-Wolfe gap of order \(\mathcal{O}(\delta^\alpha)\). Consequently, the \(\mathcal{O}(\sqrt{\delta})\) rate is order-wise unimprovable.</p>
+              <p class="mb-3">Error accumulation implies that achieving a first-order accurate solution requires a second-order accurate gradient. Indeed, the right-hand side can be written as</p>
+              <p class="math-display">\[\frac{U_0 - h(\lambda_1)}{\beta_{k+1}} + \frac{\sum_{i=1}^k \left(\tfrac{1}{2} C \alpha_i^2 / \beta_{i+1} + \beta_{i+1} \delta\right)}{\beta_{k+1}} \ge \frac{U_0 - h(\lambda_1)}{\beta_{k+1}} + \sqrt{2 C \delta}\, \frac{\beta_{k+1} - 1}{\beta_{k+1}}.\]</p>
+              <p>For large \(k\) we have \(0 < (\beta_2 - 1)/\beta_2 \le (\beta_{k+1} - 1)/\beta_{k+1} \le 1\).</p>
+              <div class="theorem-block">
+                <h4>Example&nbsp;2 (Constant step sizes)</h4>
+                <p>Take \(\bar{\alpha}_k = \bar{\alpha}\) and \(\delta_i = \delta\). Then \(\beta_k = (1 - \bar{\alpha})^{-k+1}\) and \(\alpha_k = \bar{\alpha} (1 - \bar{\alpha})^{-k}\), leading to</p>
+                <p class="math-display">\[U_{k+1} - h(\lambda_{k+1}) \le \tfrac{1}{2} C \big((1 - \bar{\alpha})^{k-1} + \bar{\alpha}\big) + \frac{\delta}{\bar{\alpha}}.\]</p>
+                <p>Choosing \(\bar{\alpha} = 1 - (k - 1)^{-1/(k - 2)} = 1 - e^{-\frac{\log(k - 1)}{k - 2}} \in \big[\tfrac{1}{e} \tfrac{\log(k - 1)}{k - 2}, \tfrac{\log(k - 1)}{k - 2}\big]\) yields</p>
+                <p class="math-display">\[U_{k+1} - h(\lambda_{k+1}) \le \tfrac{1}{2} C\left(\frac{1}{k - 1} + \frac{\log(k - 1)}{k - 2}\right) + \frac{\delta}{\bar{\alpha}},\]</p>
+                <p>so achieving an \(\widetilde{\mathcal{O}}(1/k)\) rate requires \(\delta = \mathcal{O}(\log k / k^2)\). No \(\alpha > 1/2\) guarantees a final Frank-Wolfe gap of order \(\mathcal{O}(\delta)\).</p>
               </div>
             </section>
 
             <section class="mb-5">
-              <h2 id="projection-vs-lmo">5.&nbsp;Projection versus LMO</h2>
-              <p>Let \(C\subset\mathbb{R}^d\) be nonempty, compact, and convex. Denote the Euclidean projection by \(\operatorname{Proj}_C(x)\) and the linear minimization oracle by \(\operatorname{LMO}_C(z) = \arg\min_{c\in C} \langle c, z \rangle\). A \(K\)-approximate projection \(p'\) of \(x\) satisfies</p>
-              <p class="math-display">\[\tfrac{1}{2}\|p' - x\|^2 \le \min_{c\in C} \tfrac{1}{2}\|c - x\|^2 + K.\]</p>
-              <p>Every such approximate projection controls the deviation from the projection optimality conditions.</p>
+              <h2 id="projection-lmo">5.&nbsp;Projection vs.&nbsp;LMO: accurate linear minimization beats coarse projection</h2>
+              <p>Let \((\cdot,\cdot)\) denote the Euclidean inner product with corresponding norm \(\|\cdot\|\). For a nonempty compact convex set \(C\subset\mathbb{R}^d\), define the projection and the linear minimization oracle by</p>
+              <p class="math-display">\[\operatorname{Proj}_C(x) = \arg\min_{c\in C} \tfrac{1}{2}\|c - x\|^2, \qquad \operatorname{LMO}_C(z) = \arg\min_{c\in C} (c, z).\]</p>
+              <p>An element \(p\in C\) is an \(\varepsilon\)-approximate projection if</p>
+              <p class="math-display">\[\tfrac{1}{2}\|p - x\|^2 \le \min_{c\in C} \tfrac{1}{2}\|c - x\|^2 + \varepsilon,\]</p>
+              <p>and \(v\in C\) is an \(\varepsilon\)-accurate LMO point if \(0 \le (v,x) - \min_{c\in C} (c,x) \le \varepsilon\).</p>
               <div class="theorem-block">
-                <h4>Proposition 2</h4>
-                <p>If \(p'\) is a \(K\)-approximate projection, then \((c - p', x - p') \le K + \tfrac{1}{2}\|c - p'\|^2\) for all \(c\in C\).</p>
+                <h4>Proposition&nbsp;2</h4>
+                <p>If \(p\in \varepsilon\)-\(\operatorname{Proj}_C(x)\), then for all \(c \in C\)</p>
+                <p class="math-display">\[(c - p, x - p) \le \varepsilon + \tfrac{1}{2} \|c - p\|^2.\]</p>
+                <p><strong>Proof.</strong> From the definition of \(p\), \(\tfrac{1}{2}\|p - x\|^2 \le \tfrac{1}{2}\|c - x\|^2 + \varepsilon\) for all \(c\in C\). Expanding the squares gives \((c - p, x - p) \le \varepsilon + \tfrac{1}{2} \|c - p\|^2\). \(\square\)</p>
               </div>
-              <p>Combining this with a scaling argument yields our main comparison.</p>
               <div class="theorem-block">
-                <h4>Theorem 4</h4>
-                <p>Let \(x\in\mathbb{R}^d\) and suppose \(p'\) is a \(K\)-approximate projection of \(-\lambda x\) for some \(\lambda&gt;0\). Let \(v\in \operatorname{LMO}_C(x)\), \(\delta_C = \sup_{c_1,c_2\in C}\|c_1-c_2\|\), and \(\mu_C = \sup_{c\in C}\|c\|\). Then</p>
-                <p class="math-display">\[0 \le \langle p', x \rangle - \min_{c\in C} \langle c, x \rangle \le \frac{K + \tfrac{1}{2}\delta_C^2 + \min\{\mu_C\delta_C, \mu_C^2\}}{\lambda}.\]</p>
-                <p>Choosing \(\lambda \ge \big(K + \tfrac{1}{2}\delta_C^2 + \min\{\mu_C\delta_C, \mu_C^2\}\big)/\varepsilon\) ensures that \(p'\) is an \(\varepsilon\)-accurate LMO for \(x\). Thus, even coarse projections cannot outperform accurate LMOs.</p>
+                <h4>Theorem&nbsp;5 (From \(K\)-projection to accurate LMO)</h4>
+                <p>Let \(x\in\mathbb{R}^d\) and \(C\subset\mathbb{R}^d\) be nonempty, compact, and convex. Denote the diameter \(\delta_C = \sup_{c_1,c_2\in C}\|c_1 - c_2\|\) and the radius \(\mu_C = \sup_{c\in C}\|c\|\). Take \(v\in \operatorname{LMO}_C(x)\) and let \(p'\in C\) be a \(K\)-approximate projection of \(-\lambda x\) for some \(\lambda > 0\). Then</p>
+                <p class="math-display">\[0 \le (p', x) - (v, x) \le \frac{K + \tfrac{1}{2} \delta_C^2 + \min\{\mu_C \delta_C, \mu_C^2\}}{\lambda}.\]</p>
+                <p>Consequently, choosing \(\lambda \ge \big(K + \tfrac{1}{2} \delta_C^2 + \min\{\mu_C \delta_C, \mu_C^2\}\big)/\varepsilon\) guarantees \((p', x) \le \min_{c\in C} (c, x) + \varepsilon\), i.e., \(p'\in \varepsilon\)-\(\operatorname{LMO}_C(x)\).</p>
+                <p><strong>Proof.</strong> Proposition&nbsp;2 gives</p>
+                <p class="math-display">\[(c - p', -\lambda x - p') \le K + \tfrac{1}{2} \|c - p'\|^2, \qquad \forall c \in C.\]</p>
+                <p>Choosing \(c = v\) yields</p>
+                <p class="math-display">\[\lambda (p', x) - \lambda (v, x) \le K + \tfrac{1}{2} \|v - p'\|^2 + (p', v - p').\]</p>
+                <p>Thus</p>
+                <p class="math-display">\begin{aligned}
+                  \lambda (p' - v, x) &\le K + \tfrac{1}{2} \|v - p'\|^2 + (p', v - p') \\
+                  &= K + \tfrac{1}{2} \|v - p'\|^2 + (v, p') - \|p'\|^2 \\
+                  &\le K + \tfrac{1}{2} \|v - p'\|^2 + \|p'\| (\|v\| - \|p'\|) \\
+                  &\le K + \tfrac{1}{2} \delta_C^2 + \min\{\mu_C \delta_C, \mu_C^2\}.
+                \end{aligned}</p>
+                <p>Hence \((p', x) - (v, x) \le [K + \tfrac{1}{2} \delta_C^2 + \min\{\mu_C \delta_C, \mu_C^2\}] / \lambda\). The nonnegativity follows because \(v\) minimizes \((c, x)\) over \(C\). \(\square\)</p>
               </div>
+              <p>This result extends Woodstock (2025), which handled exact projections on polyhedral sets, to approximate projections on arbitrary compact convex sets.</p>
             </section>
 
             <section class="mb-5">
-              <h2 id="appendix">Appendix</h2>
-              <p>The appendices collect proofs of the main theorems and descent inequalities. Key steps include expanding smoothness inequalities, telescoping the recursion with the auxiliary sequences \(\alpha_k\) and \(\beta_k\), and bounding the accumulated oracle error.</p>
-            </section>
-
-            <section class="mb-5">
-              <h2 id="references">References</h2>
-              <ul class="references">
-                <li>Devolder, O., Glineur, F., &amp; Nesterov, Y. (2014). First-order methods of smooth convex optimization with inexact oracle. <em>Mathematical Programming</em>, 146(1&ndash;2), 37&ndash;75.</li>
-                <li>Freund, R. M., &amp; Grigas, P. (2013). New analysis and results for the Frank-Wolfe method. <em>Mathematical Programming</em>, 155(1&ndash;2), 199&ndash;230.</li>
-                <li>Goldfarb, D., Iyengar, G., &amp; Zhou, R. (2017). Linear convergence of stochastic Frank-Wolfe algorithms. <em>arXiv preprint</em> arXiv:1707.06231.</li>
-                <li>Hazan, E., &amp; Luo, H. (2016). Variance-reduced and projection-free stochastic optimization. In <em>International Conference on Machine Learning</em>.</li>
-                <li>Jaggi, M. (2013). Revisiting Frank-Wolfe: Projection-free sparse convex optimization. In <em>International Conference on Machine Learning</em>.</li>
-                <li>Locatello, F., Abernethy, J., Khanna, R., &amp; Jaggi, M. (2019). A unified optimization view on generalized matching pursuit and Frank-Wolfe. <em>International Conference on Artificial Intelligence and Statistics</em>.</li>
-                <li>Lu, H., &amp; Freund, R. (2018). Near-linear convergence of decomposition methods for convex optimization. <em>Mathematical Programming</em>, 171(1&ndash;2), 397&ndash;431.</li>
-                <li>Reddi, S. J., Sra, S., Póczos, B., Smola, A., &amp; Bach, F. (2016). Stochastic Frank-Wolfe methods for nonconvex optimization. In <em>Conference on Learning Theory</em>.</li>
-                <li>Sfyraki, E., &amp; Wang, M. (2025). Robust stochastic Frank-Wolfe algorithms under heavy-tailed noise. <em>arXiv preprint</em> arXiv:2501.01234.</li>
-                <li>Tang, Z., Yang, J., Zhang, Y., &amp; Yin, W. (2022). Implementable and robust Frank-Wolfe algorithms. <em>SIAM Journal on Optimization</em>, 32(3), 1801&ndash;1832.</li>
-                <li>Woodstock, J. (2025). Projection-free optimization in the age of linear oracles. <em>Optimization Letters</em>, 19(1), 45&ndash;62.</li>
-                <li>Zhang, J., Lan, G., &amp; Liang, Y. (2020). Stochastic conditional gradient methods: From convex minimization to submodular maximization. <em>Mathematics of Operations Research</em>, 45(4), 1342&ndash;1365.</li>
-              </ul>
+              <h2 id="acknowledgements">Acknowledgements</h2>
+              <p>I thank the reviewers for their helpful comments.</p>
             </section>
           </article>
         </div>
@@ -255,15 +275,6 @@
     </div>
   </main>
 
-  <footer class="py-4 text-center text-muted">
-    <div class="container">
-      <small>© <span id="year"></span> Tao Hu. Crafted with inspiration from Wanyu Zhang’s portfolio.</small>
-    </div>
-  </footer>
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-  <script>
-    document.getElementById('year').textContent = new Date().getFullYear();
-  </script>
 </body>
 </html>
