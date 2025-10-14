@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A Wasserstein Penalty Framework for Stochastic Optimization | Tao Hu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(','\\)'], ['$', '$']],
+        displayMath: [['\\[','\\]'], ['$$','$$']]
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body class="blog-page">
+  <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+    <div class="container">
+      <a class="navbar-brand" href="../index.html">Tao Hu</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="../index.html#about">About</a></li>
+          <li class="nav-item"><a class="nav-link" href="../index.html#education">Education</a></li>
+          <li class="nav-item"><a class="nav-link" href="../index.html#research">Research</a></li>
+          <li class="nav-item"><a class="nav-link" href="../index.html#experience">Experience</a></li>
+          <li class="nav-item"><a class="nav-link" href="../index.html#honors">Honors</a></li>
+          <li class="nav-item"><a class="nav-link" href="../index.html#skills">Skills</a></li>
+          <li class="nav-item"><a class="nav-link" href="../index.html#blog">Blog</a></li>
+          <li class="nav-item"><a class="nav-link" href="../index.html#contact">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <header class="blog-hero">
+    <div class="overlay"></div>
+    <div class="container text-center text-white">
+      <h1 class="display-5">A Wasserstein Penalty Framework for Stochastic Optimization</h1>
+      <p class="lead">Interpreting stochastic gradients through distributionally robust optimization</p>
+      <div class="blog-meta">
+        <span><i class="bi bi-calendar-event"></i> August 2025</span>
+        <span><i class="bi bi-tag"></i> Optimization</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="blog-content py-5">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-xl-9">
+          <article class="blog-post">
+            <h2 class="mb-4">Introduction</h2>
+            <p>Consider the stochastic optimization problem</p>
+            <p class="text-center">\[\min_{\mathbf{B} \in \mathbb{R}^{m \times n}} \mathbb{E}_{\xi \sim \mathbb{P}} f(\mathbf{B}, \xi).\]</p>
+            <p>Write \(f(\mathbf{B}) = \mathbb{E} f(\mathbf{B}, \xi)\) and denote \(\nabla f(\mathbf{B}, \xi) = \nabla_{\mathbf{B}} f(\mathbf{B}, \xi)\). Robust optimization has long been a central theme in optimization theory, and here each iteration of stochastic optimization is interpreted as a robust decision process.</p>
+
+            <div class="bg-light border rounded p-3 mb-4">
+              <h3 class="h5">Algorithm 1 (DRO-based Steepest Descent)</h3>
+<pre class="mb-0"><code>Initialize: \(\mathbf{B}_0 \leftarrow 0\)
+For \(t = 0, \dots, T-1\):
+  1. Compute batch gradients \(\mathbf{G}_i \leftarrow \nabla_{\mathbf{B}} f(\mathbf{B}_t, \xi_{t,i})\) for \(i=1,\dots,N_t\).
+  2. Form the empirical average \(\overline{\mathbf{G}}_t = \tfrac{1}{N_t} \sum_{i=1}^{N_t} \mathbf{G}_i\).
+  3. Obtain the search direction \(\mathbf{d}_t\) by solving a DRO subproblem built from the empirical distribution \(\mathbb{P}_{t,N_t} = \tfrac{1}{N_t} \sum_{i=1}^{N_t} \delta_{\nabla f(\mathbf{B}_t, \xi_{t,i})}\).
+  4. Update the iterate \(\mathbf{B}_{t+1} \leftarrow \mathbf{B}_{t} - \mathbf{d}_t\).
+Return \(\mathbf{B}_T\).</code></pre>
+            </div>
+
+            <div class="alert alert-secondary" role="alert">
+              <strong>Assumption 1 (Lipschitz gradient in \(\mathbf{B}\)).</strong>
+              There exists \(L \ge 0\) such that for all \(\xi\) and all \(\mathbf{B}_1, \mathbf{B}_2 \in \mathbb{R}^{m \times n}\),
+              \[\big\|\nabla_{\mathbf{B}} f(\mathbf{B}_1, \xi) - \nabla_{\mathbf{B}} f(\mathbf{B}_2, \xi)\big\| \le L\, \|\mathbf{B}_1 - \mathbf{B}_2\|_*.
+              \]
+              Throughout we employ the nuclear norm so that the dual norm is the operator norm. Each map \(\mathbf{B} \mapsto f(\mathbf{B}, \xi)\) is therefore \(L\)-smooth with respect to this norm, with \(L\) independent of \(\xi\).
+            </div>
+
+            <h3 class="mt-5">RELU Formulations</h3>
+            <p>The search direction \(\mathbf{d}_t\) can be characterized through several distributionally robust formulations. A first variant uses the rectified linear unit objective:</p>
+            <p class="text-center">\[
+\mathbf{d}_t = \arg\min_{\mathbf{d} \in \mathbb{R}^{m \times n}} \sup_{\substack{\mathbb{Q} \in \mathcal{M}(\mathbb{R}^{m \times n}) \\ \mathbb{Q}(\mathbb{R}^{m \times n}) = 1, \\ W_1(\mathbb{P}_{t,N_t}, \mathbb{Q}) \le \gamma}}
+  \mathbb{E}_{G \sim \mathbb{Q}}[\operatorname{ReLU}(\langle \mathbf{d}, G \rangle)].
+\]</p>
+
+            <div class="bg-light border rounded p-3 mb-4">
+              <h3 class="h5">Algorithm 2 (Momentum-Steered DRO Steepest Descent)</h3>
+<pre class="mb-0"><code>Initialize: \(\mathbf{B}_0 \leftarrow 0\), \(\eta_0 \leftarrow 0\)
+For \(t = 0, \dots, T-1\):
+  1. Compute batch gradients \(\mathbf{G}_i \leftarrow \nabla_{\mathbf{B}} f(\mathbf{B}_t, \xi_{t,i})\).
+  2. Form \(\overline{\mathbf{G}}_t = \tfrac{1}{N_t} \sum_{i=1}^{N_t} \mathbf{G}_i\).
+  3. Update the momentum scale \(\eta_t \leftarrow \beta \eta_{t-1} + (1-\beta)\|\overline{\mathbf{G}}_t\|\).
+  4. Set the direction \(\mathbf{d}_t \leftarrow \eta_t \overline{\mathbf{G}}_t / \|\overline{\mathbf{G}}_t\|\).
+  5. Update the iterate \(\mathbf{B}_{t+1} \leftarrow \mathbf{B}_t - \mathbf{d}_t\).
+Return \(\mathbf{B}_T\).</code></pre>
+            </div>
+
+            <div class="bg-light border rounded p-3 mb-4">
+              <h3 class="h5">Algorithm 3 (Steepest Descent under Wasserstein Penalty)</h3>
+<pre class="mb-0"><code>Initialize: \(\mathbf{B}_0 \leftarrow 0\)
+For \(t = 0, \dots, T-1\):
+  1. Compute batch gradients and their average \(\overline{\mathbf{G}}_t\).
+  2. Compute the thin SVD \(\overline{\mathbf{G}}_t = U_t \Sigma_t V_t^\top\).
+  3. Set \(\mathbf{d}_t = -\max\{0, (\|\overline{\mathbf{G}}_t\|_{\text{nuc}} - C_t)/(2L_w)\}\, U_t V_t^\top\).
+  4. Update \(\mathbf{B}_{t+1} \leftarrow \mathbf{B}_t - \mathbf{d}_t\).
+Return \(\mathbf{B}_T\).</code></pre>
+            </div>
+
+            <h2 class="mt-5">Formulation Using Moment Ambiguity Sets</h2>
+            <p>For notational simplicity write \(f(\boldsymbol{x}, \xi) = f(\mathbf{B}, \xi)\), where \(\boldsymbol{x} \in \mathbb{R}^{mn}\) vectorizes \(\mathbf{B}\). Consider the moment-based ambiguity set proposed by Delage and Ye.</p>
+            <p class="text-center">\[
+\begin{aligned}
+\Psi(\boldsymbol{x}, \Delta \boldsymbol{x}, \gamma_1, \gamma_2) = \max_{\mu, f_{\xi}} \;& \mathbb{E}_{f_{\xi}}[h(\boldsymbol{x}, \Delta \boldsymbol{x}, \xi)] \\
+\text{s.t.}\quad & \mathbb{E}_{f_{\xi}}[1] = 1,\quad \mathbb{E}_{f_{\xi}}[\nabla f(\boldsymbol{x}, \xi)] = \mu, \\
+& \mathbb{E}_{f_{\xi}}[(\nabla f(\boldsymbol{x}, \xi) - \mu_0)(\nabla f(\boldsymbol{x}, \xi) - \mu_0)^\top] \preceq \gamma_2 \Sigma_0, \\
+& \begin{bmatrix} \Sigma_0 & (\mu - \mu_0) \\ (\mu - \mu_0)^\top & \gamma_1 \end{bmatrix} \succeq 0, \\
+& f_{\xi}(\nabla f(\boldsymbol{x}, \xi)) \ge 0,\quad \forall \xi \in \mathcal{S}.
+\end{aligned}
+\]</p>
+
+            <div class="alert alert-secondary" role="alert">
+              <strong>Claim 1.</strong>
+              Let \(\bar\gamma = \min\{\gamma_1, \gamma_2\}\). With \(h(\boldsymbol{x}, \Delta \boldsymbol{x}, \xi) = \Delta \boldsymbol{x}^\top \nabla f(\boldsymbol{x}, \xi)\),
+              \[\Psi(\boldsymbol{x}, \Delta \boldsymbol{x}, \gamma_1, \gamma_2) = \Delta \boldsymbol{x}^\top \mu_0 + \sqrt{\bar\gamma}\, \sqrt{\Delta \boldsymbol{x}^\top \Sigma_0 \Delta \boldsymbol{x}}.\]
+            </div>
+
+            <div class="mb-4">
+              <h3 class="h5">Proof.</h3>
+              <p>The maximizer is supported on a single point. Because
+              \[(\mu - \mu_0)(\mu - \mu_0)^\top + \operatorname{Cov}(\nabla f(\boldsymbol{x}, \xi)) = \mathbb{E}_{f_{\xi}}[(\nabla f(\boldsymbol{x}, \xi) - \mu_0)(\nabla f(\boldsymbol{x}, \xi) - \mu_0)^\top],\]
+              the bounds \((\mu - \mu_0)(\mu - \mu_0)^\top \preceq \gamma_2 \Sigma_0\) and \((\mu - \mu_0)(\mu - \mu_0)^\top \preceq \gamma_1 \Sigma_0\) hold, so that
+              \((\mu - \mu_0)(\mu - \mu_0)^\top \preceq \bar\gamma \Sigma_0\).
+              Hölder's inequality then gives
+              \[\Delta \boldsymbol{x}^\top \mu \le \Delta \boldsymbol{x}^\top \mu_0 + \sqrt{\bar\gamma}\, \sqrt{\Delta \boldsymbol{x}^\top \Sigma_0 \Delta \boldsymbol{x}},\]
+              with equality when \(\mu = \mu_0 + \bar\gamma \Sigma_0 \Delta \boldsymbol{x} / \sqrt{\Delta \boldsymbol{x}^\top \Sigma_0 \Delta \boldsymbol{x}}\). \(\square\)
+            </div>
+
+            <p>Replacing \(h\) by \(-\operatorname{ReLU}(-\Delta \boldsymbol{x}^\top \nabla f(\boldsymbol{x}, \xi))\) yields</p>
+            <div class="alert alert-secondary" role="alert">
+              <strong>Claim 2.</strong>
+              With \(\bar\gamma = \min\{\gamma_1, \gamma_2\}\),
+              \[\Psi(\boldsymbol{x}, \Delta \boldsymbol{x}, \gamma_1, \gamma_2) = \min\bigl\{0,\; \Delta \boldsymbol{x}^\top \mu_0 + \sqrt{\bar\gamma}\, \sqrt{\Delta \boldsymbol{x}^\top \Sigma_0 \Delta \boldsymbol{x}}\bigr\}.\]
+            </div>
+            <p><strong>Proof.</strong> Concavity of \(-\operatorname{ReLU}(-\lambda)\) ensures \(\mathbb{E}_{f_{\xi}}[h]\le\min\{0, \Delta \boldsymbol{x}^\top \mu\}\). The preceding argument bounds \(\Delta \boldsymbol{x}^\top \mu\) and the same extremal distribution achieves equality. \(\square\)</p>
+
+            <p>Similarly, using \(h(\boldsymbol{x}, \Delta \boldsymbol{x}, \xi) = \operatorname{ReLU}(\Delta \boldsymbol{x}^\top \nabla f(\boldsymbol{x}, \xi))\) gives</p>
+            <div class="alert alert-secondary" role="alert">
+              <strong>Claim 3.</strong>
+              With \(\bar\gamma = \min\{\gamma_1, \gamma_2\}\),
+              \[\Psi(\boldsymbol{x}, \Delta \boldsymbol{x}, \gamma_1, \gamma_2) = \max\bigl\{0,\; \Delta \boldsymbol{x}^\top \mu_0 + \sqrt{\bar\gamma}\, \sqrt{\Delta \boldsymbol{x}^\top \Sigma_0 \Delta \boldsymbol{x}}\bigr\}.\]
+            </div>
+
+            <h2 class="mt-5">Wasserstein Penalty with Quadratic Regularization</h2>
+            <p>Fix iteration \(t\) and consider the distributionally robust subproblem</p>
+            <p class="text-center">\[
+\mathbf{d}_t = \arg\min_{\mathbf{d} \in \mathbb{R}^{m \times n}} \sup_{\substack{\mathbb{Q} \in \mathcal{M}(\mathbb{R}^{m \times n}) \\ \mathbb{Q}(\mathbb{R}^{m \times n}) = 1}}
+\left\{ \mathbb{E}_{G \sim \mathbb{Q}}[\langle \mathbf{d}, G \rangle] - \frac{1}{2\kappa} W_1^2(\mathbb{P}_{t,N_t}, \mathbb{Q}) \right\}.
+\]</p>
+
+            <div class="alert alert-secondary" role="alert">
+              <strong>Theorem 1.</strong>
+              The problem above is equivalent to
+              \[\mathbf{d}_t = \arg\min_{\mathbf{d} \in \mathbb{R}^{m \times n}} \left\{\langle \mathbf{d}, \overline{\mathbf{G}}_t\rangle + \tfrac{\kappa}{2}\, \|\mathbf{d}\|_*^2\right\}.
+              \]
+            </div>
+
+            <div class="alert alert-secondary" role="alert">
+              <strong>Theorem 2.</strong>
+              When the nuclear norm is used, the minimizer admits the closed form
+              \[\mathbf{d}_t = -\frac{1}{\kappa} \|\overline{\mathbf{G}}_t\|_{\text{nuc}}\, U_t V_t^\top,\]
+              where \(\overline{\mathbf{G}}_t = U_t \Sigma_t V_t^\top\) is the thin SVD of the averaged gradient.
+            </div>
+
+            <h2 class="mt-5">Wasserstein Penalty with Power \(p\)</h2>
+            <p>For \(p \in (1, \infty)\) consider the general penalty</p>
+            <p class="text-center">\[
+\mathbf{d}_t = \arg\min_{\mathbf{d} \in \mathbb{R}^{m \times n}} \sup_{\substack{\mathbb{Q} \in \mathcal{M}(\mathbb{R}^{m \times n}) \\ \mathbb{Q}(\mathbb{R}^{m \times n}) = 1}}
+\left\{ \mathbb{E}_{G \sim \mathbb{Q}}[\langle \mathbf{d}, G \rangle] - \frac{1}{\kappa p} W_p^p(\mathbb{P}_{t,N_t}, \mathbb{Q}) \right\}.
+\]</p>
+
+            <div class="alert alert-secondary" role="alert">
+              <strong>Theorem 3.</strong>
+              Let \(q\) satisfy \(\tfrac{1}{p} + \tfrac{1}{q} = 1\). Then
+              \[\mathbf{d}_t = \arg\min_{\mathbf{d} \in \mathbb{R}^{m \times n}} \left\{\langle \mathbf{d}, \overline{\mathbf{G}}_t\rangle + \frac{\kappa}{q} \|\mathbf{d}\|_*^q\right\}.
+              \]
+            </div>
+
+            <div class="alert alert-secondary" role="alert">
+              <strong>Theorem 4.</strong>
+              Using the nuclear norm yields the closed form
+              \[\mathbf{d}_t = -\left(\frac{\|\overline{\mathbf{G}}_t\|_{\text{nuc}}}{\kappa}\right)^{\!\frac{1}{q-1}} U_t V_t^\top.
+              \]
+            </div>
+
+            <h2 class="mt-5">Convergence beyond Uniform Lipschitz Gradients</h2>
+            <div class="alert alert-secondary" role="alert">
+              <strong>Assumption 2 (Wasserstein-Lipschitz gradient).</strong>
+              Denote by \(\mathbb{P}_{\mathbf{B}}\) the distribution of \(\nabla f(\mathbf{B}, \xi)\). There exists \(L_w \ge 0\) such that for all \(\mathbf{B}, \mathbf{B}' \in \mathbb{R}^{m \times n}\),
+              \[W_1(\mathbb{P}_{\mathbf{B}}, \mathbb{P}_{\mathbf{B}'}) \le L_w \|\mathbf{B} - \mathbf{B}'\|_*.
+              \]
+            </div>
+            <p>Suppose further that \(W_1(\mathbb{P}_{t,N_t}, \mathbb{P}_{\mathbf{B}_t}) \le C_t\) with high probability. For any \(\mathbf{B}\) we then have \(W_1(\mathbb{P}_{t,N_t}, \mathbb{P}_{\mathbf{B}}) \le C_t + L_w \|\mathbf{B}_t - \mathbf{B}\|_*\). This leads to the subproblem</p>
+            <p class="text-center">\[
+\mathbf{d}_t = \arg\min_{\mathbf{d} \in \mathbb{R}^{m \times n}} \sup_{\substack{\mathbb{Q} \in \mathcal{M}(\mathbb{R}^{m \times n}) \\ \mathbb{Q}(\mathbb{R}^{m \times n}) = 1, \\ W_1(\mathbb{P}_{t,N_t}, \mathbb{Q}) \le C_t + L_w \|\mathbf{d}\|_*}} \mathbb{E}_{G \sim \mathbb{Q}}[\langle \mathbf{d}, G \rangle].
+\]</p>
+
+            <div class="alert alert-secondary" role="alert">
+              <strong>Theorem 5.</strong>
+              The problem above is equivalent to
+              \[\mathbf{d}_t = \arg\min_{\mathbf{d} \in \mathbb{R}^{m \times n}} \left\{\langle \mathbf{d}, \overline{\mathbf{G}}_t\rangle + C_t \|\mathbf{d}\|_* + L_w \|\mathbf{d}\|_*^2\right\}.
+              \]
+            </div>
+
+            <div class="alert alert-secondary" role="alert">
+              <strong>Theorem 6.</strong>
+              With the nuclear norm, the optimizer satisfies
+              \[\mathbf{d}_t = -\max\left\{0, \frac{\|\overline{\mathbf{G}}_t\|_{\text{nuc}} - C_t}{2L_w}\right\} U_t V_t^\top.
+              \]
+            </div>
+
+            <div class="alert alert-secondary" role="alert">
+              <strong>Assumption 3 (Light-tailed gradients).</strong>
+              There exist constants \(a &gt; 1\) and \(A &gt; 0\) such that \(\mathbb{E}_{G \sim \mathbb{P}_{\mathbf{B}}}[\exp(\|G\|^a)] \le A\) for all \(\mathbf{B}\).
+            </div>
+            <p>Let \(E_t\) denote the event \(\|\mathbb{E}_{\mathbb{P}_{t,N_t}} \nabla f(\mathbf{B}_t, \xi) - \mathbb{E}_{\mathbb{P}_{\mathbf{B}_t}} \nabla f(\mathbf{B}_t, \xi)\| \le C_t\). The events \(E_t\) are independent across iterations.</p>
+
+            <div class="alert alert-secondary" role="alert">
+              <strong>Theorem 7.</strong>
+              For \(T &gt; 0\) and \(\delta &gt; 0\), pick \(\{\delta_t\}_{t=0}^{T-1}\) with \(\sum_{t=0}^{T-1} \delta_t &lt; \delta\). Then with probability at least \(1 - \delta\),
+              \[\frac{1}{T} \sum_{t=0}^{T-1} \|\nabla f(\mathbf{B}_t)\|^2 \le \frac{8 L_w (f(\mathbf{B}_0) - f^*)}{T} + \frac{8}{T} \sum_{t=0}^{T-1} C_t^2,
+              \]
+              and consequently
+              \[\min_{0 \le t &lt; T} \|\nabla f(\mathbf{B}_t)\|^2 \le \frac{8 L_w (f(\mathbf{B}_0) - f^*)}{T} + \frac{8}{T} \sum_{t=0}^{T-1} C_t^2.
+              \]
+            </div>
+
+            <div class="alert alert-info" role="alert">
+              <strong>Remark.</strong>
+              Any unitary invariant cross norm shares the same \(C_t\). For large \(T\), the term \(\sum_{t=0}^{T-1} C_t^2\) dominates, so the bound is essentially invariant across such norms. Because the nuclear norm is the largest cross norm subordinate to \(\|\cdot\|_2\) (Proposition 3.12 in Cochrane et&nbsp;al.), the nuclear-norm steepest descent rule yields the strongest descent whenever \(\nabla f(\mathbf{B}_t)\) has moderate rank.
+            </div>
+
+            <h2 class="mt-5">Appendix: Proofs</h2>
+            <p>We prove Theorems 3–6 and 7, noting that Theorems 1 and 2 follow as special cases when \(p = 2\).</p>
+
+            <h3>Theorem 3</h3>
+            <p>Let \(N = N_t\) and write \(\mathbb{P}_N = \mathbb{P}_{t,N_t}\). Put \(\mu = \mathbb{Q} - \mathbb{P}_N\), so that \(\mu\) is a signed measure with total mass zero. Using the Kantorovich–Rubinstein characterization of \(W_1\), the dual norm of \(\|\cdot\|_{\mathrm{Lip}}\) is \(\|\cdot\|_{\mathrm{KR}}\). The conjugate of \(\tfrac{1}{\kappa p} \|\cdot\|_{\mathrm{KR}}^p\) equals \(\tfrac{\kappa}{q} \|\cdot\|_{\mathrm{Lip}}^q\), leading to
+            \[\sup_{\mathbb{Q}} \Bigl\{ \mathbb{E}_{G \sim \mathbb{Q}}[\langle \mathbf{d}, G \rangle] - \tfrac{1}{\kappa p} W_p^p(\mathbb{P}_N, \mathbb{Q}) \Bigr\} = \mathbb{E}_{G \sim \mathbb{P}_N}[\langle \mathbf{d}, G \rangle] + \tfrac{\kappa}{q} \|\mathbf{d}\|_*^q.
+            \]
+            Minimizing over \(\mathbf{d}\) yields the claimed formulation. \(\square\)</p>
+
+            <h3>Theorem 4</h3>
+            <p>Write \(\mathbf{d} = c \mathbf{M}\) with \(\|\mathbf{M}\|_{\mathrm{op}} = 1\). Neumann's inequality implies \(\langle \mathbf{M}, \overline{\mathbf{G}}_t \rangle \ge -\|\overline{\mathbf{G}}_t\|_{\text{nuc}}\), with equality achieved when \(\mathbf{M} = -U_t V_t^\top\). The one-dimensional optimization \(-c \|\overline{\mathbf{G}}_t\|_{\text{nuc}} + \tfrac{\kappa}{q} c^q\) is minimized at \(c = (\|\overline{\mathbf{G}}_t\|_{\text{nuc}}/\kappa)^{1/(q-1)}\), yielding the closed form. \(\square\)</p>
+
+            <h3>Theorem 5</h3>
+            <p>The result follows from strong duality applied to a linear program over measures (Shapiro, 2001). Introducing nonnegative measures \(\{\mathbb{Q}^i\}_{i=1}^N\) for the support of \(\mathbb{Q}\) and using the Wasserstein constraint leads to the dual objective \(\langle \mathbf{d}, \overline{\mathbf{G}}_t\rangle + C_t \|\mathbf{d}\|_* + L_w \|\mathbf{d}\|_*^2\).
+            \(\square\)</p>
+
+            <h3>Theorem 6</h3>
+            <p>Write \(\mathbf{d} = c \mathbf{M}\) with \(\|\mathbf{M}\|_{\mathrm{op}} = 1\). Using the SVD of \(\overline{\mathbf{G}}_t\) once more, we minimize \(c (C_t - \|\overline{\mathbf{G}}_t\|_{\text{nuc}}) + L_w c^2\) over \(c \ge 0\), giving the stated thresholding rule. \(\square\)</p>
+
+            <h3>Theorem 7</h3>
+            <p>Assume event \(E_t\) holds. Lemma 1 shows that
+            \[f(\mathbf{B}_t + \mathbf{d}) - f(\mathbf{B}_t) \le \sup_{W_1(\mathbb{P}_{t,N_t}, \mathbb{Q}) \le C_t + L_w \|\mathbf{d}\|_*} \mathbb{E}_{G \sim \mathbb{Q}} \langle \mathbf{d}, G \rangle.
+            \]
+            Selecting \(\mathbf{d} = \mathbf{d}_t\) and applying Theorem 6 yields
+            \[f(\mathbf{B}_{t+1}) - f(\mathbf{B}_t) \le -\frac{(\|\overline{\mathbf{G}}_t\| - C_t)_+^2}{4L_w}.
+            \]
+            Because \(\|\overline{\mathbf{G}}_t - \nabla f(\mathbf{B}_t)\| \le C_t\), we further obtain
+            \[f(\mathbf{B}_{t+1}) - f(\mathbf{B}_t) \le -\frac{1}{8 L_w} \|\nabla f(\mathbf{B}_t)\|^2 + \frac{1}{L_w} C_t^2.
+            \]
+            Summing from \(t = 0\) to \(T-1\) and dividing by \(T\) delivers the claimed rate. \(\square\)</p>
+
+            <h3>Auxiliary Lemma</h3>
+            <p>For any \(x, y \ge 0\), the inequality \((x - y)_+^2 \ge \tfrac{1}{2} x^2 - y^2\) holds. The proof follows by considering the cases \(x \ge y\) and \(x < y\) separately and expanding the square.</p>
+
+            <h2 class="mt-5">References</h2>
+            <ul>
+              <li>A. Delage and Y. Ye. &ldquo;Distributionally Robust Optimization under Moment Uncertainty.&rdquo; <em>Operations Research</em>, 58(3):595&ndash;612, 2010.</li>
+              <li>M. Kantorovich and G. Rubinstein. &ldquo;On a Space of Completely Additive Functions.&rdquo; <em>Vestnik Leningrad University</em>, 13(7):52&ndash;59, 1958.</li>
+              <li>A. S. Lewis. &ldquo;The Convex Analysis of Unitarily Invariant Matrix Functions.&rdquo; <em>Journal of Convex Analysis</em>, 2(1&ndash;2):173&ndash;183, 1995.</li>
+              <li>T. Cochrane, A. H. Hamel, and P. J. Lawrence. &ldquo;Tensor Cross Norms and Applications.&rdquo; <em>SIAM Journal on Matrix Analysis and Applications</em>, 43(2):665&ndash;690, 2022.</li>
+              <li>A. Shapiro. &ldquo;On Duality Theory of Conic Linear Problems.&rdquo; <em>Nonlinear Analysis</em>, 47(3):1913&ndash;1926, 2001.</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="py-4 text-center text-muted">
+    <div class="container">
+      <small>© <span id="year"></span> Tao Hu.</small>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
