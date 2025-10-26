@@ -159,6 +159,13 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: 0;
 }
 
+.experience-photo {
+  width: clamp(180px, 55%, 260px);
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .award-card,
 .skill-card {
   background: #ffffff;
