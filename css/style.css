@@ -160,7 +160,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .experience-photo {
-  max-width: 320px;
+  width: clamp(180px, 55%, 260px);
   display: block;
   margin-left: auto;
   margin-right: auto;
