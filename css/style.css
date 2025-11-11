@@ -46,8 +46,7 @@ h1, h2, h3, h4, h5, h6 {
 .hero {
   position: relative;
   padding: 180px 0 140px;
-  background: linear-gradient(115deg, rgba(11, 19, 43, 0.85), rgba(61, 106, 214, 0.75)),
-              url('../img/tao-hu.jpg') center/cover no-repeat;
+  background: #3d6ad6;
   color: #ffffff;
 }
 
