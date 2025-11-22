@@ -46,15 +46,14 @@ h1, h2, h3, h4, h5, h6 {
 .hero {
   position: relative;
   padding: 180px 0 140px;
-  background: linear-gradient(115deg, rgba(11, 19, 43, 0.85), rgba(61, 106, 214, 0.75)),
-              url('../img/tao-hu.jpg') center/cover no-repeat;
+  background: linear-gradient(135deg, #f5f0e6 0%, #e7eef7 100%);
   color: #ffffff;
 }
 
 .hero .overlay {
   position: absolute;
   inset: 0;
-  background: rgba(11, 19, 43, 0.4);
+  background: rgba(11, 19, 43, 0.25);
 }
 
 .hero .container {
