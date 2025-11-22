@@ -46,14 +46,14 @@ h1, h2, h3, h4, h5, h6 {
 .hero {
   position: relative;
   padding: 180px 0 140px;
-  background: #3d6ad6;
+  background: linear-gradient(135deg, #f5f0e6 0%, #e7eef7 100%);
   color: #ffffff;
 }
 
 .hero .overlay {
   position: absolute;
   inset: 0;
-  background: rgba(11, 19, 43, 0.4);
+  background: rgba(11, 19, 43, 0.25);
 }
 
 .hero .container {
